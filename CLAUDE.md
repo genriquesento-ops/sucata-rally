@@ -26,7 +26,7 @@ O projeto foi criado em outro PC. Se os caminhos abaixo não existirem, monte as
 - Chave de debug Android: `D:\Godot\debug.keystore` (usuário `androiddebugkey`, senha `android`)
 - Android SDK: `%LOCALAPPDATA%\Android\Sdk`; Java 21 em `JAVA_HOME`
 - `prototipo-2d-libgdx/` é a primeira versão 2D (libGDX), ignorada pelo Godot (`.gdignore`)
-- Git portátil (MinGit 2.56) em `D:\Git\cmd` (no PATH do usuário). Repositório com branch `main`; finais de linha LF (`.gitattributes`).
+- Git portátil (MinGit 2.56) em `D:\Git\cmd` (no PATH do usuário). Repositório público: https://github.com/genriquesento-ops/sucata-rally (branch `main`, login salvo pelo Git Credential Manager); finais de linha LF (`.gitattributes`).
 - `docs/historico-*.zip` (conversas com o Claude) fica fora do git de propósito: é privado.
 
 ## Comandos úteis
