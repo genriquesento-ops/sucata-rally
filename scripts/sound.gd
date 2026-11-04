@@ -26,6 +26,8 @@ func _ready() -> void:
 	_sfx.land = _wav(_sweep(110.0, 45.0, 0.2, 0.8))
 	_sfx.slip = _wav(_wobble(0.5, 0.35))
 	_sfx.clang = _wav(_bell([523.0, 1410.0, 2270.0], 0.6, 0.45))
+	_sfx.sizzle = _wav(_hiss(0.6, 0.35))
+	_sfx.wind = _wav(_noise(0.9, 0.35, true))
 	for i in POOL:
 		var p := AudioStreamPlayer.new()
 		p.bus = "SFX"
@@ -151,6 +153,20 @@ static func _wobble(seconds: float, volume: float) -> PackedFloat32Array:
 		var t := float(i) / RATE
 		phase += TAU * (lerpf(900.0, 350.0, u) + sin(TAU * 14.0 * t) * 120.0) / RATE
 		out.append(sin(phase) * (1.0 - u) * volume)
+	return out
+
+
+## Chiado (lava): ruído agudo (ruído menos a parte grave) com estalos e decaimento.
+static func _hiss(seconds: float, volume: float) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	var count := int(seconds * RATE)
+	var lp := 0.0
+	for i in count:
+		var u := float(i) / count
+		var n := randf_range(-1.0, 1.0)
+		lp += (n - lp) * 0.08
+		var crackle := randf_range(-1.0, 1.0) * 2.0 if randf() < 0.004 else 0.0
+		out.append(((n - lp) * 0.8 + crackle) * (1.0 - u) * volume)
 	return out
 
 

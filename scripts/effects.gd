@@ -86,6 +86,26 @@ static func sparks(parent: Node3D, pos: Vector3) -> void:
 	p.finished.connect(p.queue_free)
 
 
+## Riscos de vento saindo do ventilador na direção `dir` (local), atravessando `reach` m.
+## Partículas em coordenadas locais: o vento acompanha o objeto. Ligue com `emitting`.
+static func wind(dir: Vector3, reach: float, width: float) -> CPUParticles3D:
+	var p := _base(40, 0.9, 0.14)
+	p.local_coords = true
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = Vector3(0.3, 1.2, width * 0.35)
+	p.direction = dir
+	p.spread = 6.0
+	p.initial_velocity_min = reach / 0.9 * 0.8
+	p.initial_velocity_max = reach / 0.9 * 1.1
+	p.gravity = Vector3.ZERO
+	p.scale_amount_min = 0.8
+	p.scale_amount_max = 1.6
+	(p.mesh as QuadMesh).size = Vector2(1.2, 0.12)  # risco comprido
+	p.color_ramp = _fade(Color(1, 0.97, 0.9, 0.55))
+	p.emitting = false
+	return p
+
+
 ## Nuvem de poeira no pouso de um salto; se apaga sozinha.
 static func landing_dust(parent: Node3D, pos: Vector3, color: Color) -> void:
 	var p := _base(24, 0.9, 0.5)

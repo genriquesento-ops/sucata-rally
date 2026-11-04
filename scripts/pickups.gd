@@ -78,10 +78,20 @@ func _spawn_segment(z0: float) -> void:
 	# galões cada vez mais espaçados
 	while _next_fuel < z0 + SEGMENT:
 		if _next_fuel >= z0:
-			_add(_fuel_mesh, _terrain.path_x(_next_fuel), _next_fuel, 0.9, true, 0)
+			_add(_fuel_mesh, _terrain.path_x(_next_fuel) + _free_lane(_next_fuel), _next_fuel, 0.9, true, 0)
 		# galões em 130, 322, 591, 967, 1494 m...: o vão cresce até passar do alcance do
 		# tanque, e aí a corrida acaba (melhorar o Tanque é o que leva mais longe)
 		_next_fuel += 140.0 + _next_fuel * 0.4
+
+
+## Deslocamento da faixa livre do trecho em z (0 se não tiver): o galão vai nela, e não
+## no meio de uma poça de óleo ou lava.
+func _free_lane(z: float) -> float:
+	var index := _terrain.track.index_at(z)
+	if index < 0 or not _terrain.track.segment_of(index).has("objetos"):
+		return 0.0
+	var lane: float = _terrain.track.placements(_terrain, index).faixa
+	return 0.0 if is_nan(lane) else lane
 
 
 ## Arcos de moedas no ar, como manda o trechos.json: "arcos" do trecho (ex.: sobre o vale

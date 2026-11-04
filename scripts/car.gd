@@ -15,7 +15,8 @@ const BOOST_SECONDS := 1.5
 
 var _wheels: Array[VehicleWheel3D] = []
 var _boost_time := 0.0
-var _slip_time := 0.0  # óleo
+var _slip_time := 0.0  # óleo, gelo
+var _slip_grip := 0.3
 var _dust: CPUParticles3D
 var _boost_flame: CPUParticles3D
 var _rocket_flame: CPUParticles3D  # só no Foguete
@@ -104,10 +105,12 @@ func is_boosting() -> bool:
 	return _boost_time > 0.0
 
 
-## Óleo: aderência bem baixa por alguns segundos e um giro para o lado `side` (±1).
-func slip(seconds: float, side: float) -> void:
+## Óleo, gelo: aderência multiplicada por `grip_mult` por alguns segundos e um giro para o
+## lado `side` (±1), com força `spin`.
+func slip(seconds: float, side: float, grip_mult := 0.3, spin := 1.0) -> void:
 	_slip_time = maxf(_slip_time, seconds)
-	apply_torque_impulse(global_basis.y * side * mass * 1.2)
+	_slip_grip = grip_mult
+	apply_torque_impulse(global_basis.y * side * mass * 1.2 * spin)
 
 
 func _physics_process(delta: float) -> void:
@@ -138,7 +141,7 @@ func _physics_process(delta: float) -> void:
 	var oil := 1.0
 	if _slip_time > 0.0:
 		_slip_time -= delta
-		oil = 0.3
+		oil = _slip_grip
 	for w in _wheels:
 		w.wheel_friction_slip = stats.friction * grip * oil * (1.0 if w.use_as_steering else REAR_GRIP)
 

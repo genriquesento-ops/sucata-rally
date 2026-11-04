@@ -40,7 +40,7 @@ func _initialize() -> void:
 		if d.id == "reta":
 			continue
 		for i in Track.COUNT:
-			if _terrain.track.kind_of(i) == d._n and i * Track.SEGMENT < 700.0 * 4.0:
+			if _terrain.track.kind_of(i) == d._n and i * Track.SEGMENT < 700.0 * 10.0:
 				_spots.append([i, d.id])
 				break
 	_next()
@@ -57,10 +57,12 @@ func _check_rules() -> void:
 			bad += 1
 		if i * Track.SEGMENT < d.get("desde", 0.0):
 			early += 1
+		if d.has("regioes") and not d.regioes.has(GameData.BIOMES[GameData.biome_index(i * Track.SEGMENT)].title):
+			early += 1
 	var first := []
 	for i in 40:
 		first.append(_terrain.track.segment_of(i).id)
-	print("regras violadas: %d | antes do 'desde': %d | contagem: %s" % [bad, early, counts])
+	print("regras violadas: %d | fora do 'desde'/'regioes': %d | contagem: %s" % [bad, early, counts])
 	print("primeiros 40 trechos: %s" % ", ".join(first))
 	var objects := {}
 	for i in 100:

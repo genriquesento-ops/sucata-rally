@@ -5,7 +5,10 @@ extends RefCounted
 ## "nível de missão" sobe e as metas e recompensas crescem.
 
 const ACTIVE := 3
-const TYPES := ["distance", "coins", "jumps", "perfect", "near", "boosts", "region"]
+const TYPES := ["distance", "coins", "jumps", "perfect", "near", "boosts", "region", "dodges", "hammers"]
+
+## Recorde mínimo para a missão aparecer (as armadilhas só existem depois de certa distância).
+const NEEDS_BEST := {"dodges": 600, "hammers": 900}
 
 
 ## Garante 3 missões ativas no save.
@@ -25,6 +28,8 @@ static func text(m: Dictionary) -> String:
 		"near": return "Passe raspando por %s numa corrida" % _count(goal, "pedra", "pedras")
 		"boosts": return "Use %s numa corrida" % _count(goal, "placa de boost", "placas de boost")
 		"region": return "Chegue à região %s" % GameData.BIOMES[goal].title
+		"dodges": return "Desvie de %s numa corrida" % _count(goal, "armadilha", "armadilhas")
+		"hammers": return "Passe por %s sem levar martelada" % _count(goal, "martelo", "martelos")
 	return "?"
 
 
@@ -33,7 +38,8 @@ static func _count(n: int, one: String, many: String) -> String:
 
 
 ## Confere as missões com os números da corrida; paga as concluídas e troca por novas.
-## stats: {"distance", "coins", "jumps", "perfect", "near", "boosts"}. Devolve [{text, reward}].
+## stats: {"distance", "coins", "jumps", "perfect", "near", "boosts", "dodges", "hammers"}.
+## Devolve [{text, reward}].
 static func complete_from_run(stats: Dictionary) -> Array:
 	var done := []
 	for i in Save.missions.size():
@@ -56,7 +62,7 @@ static func _value(m: Dictionary, stats: Dictionary) -> int:
 
 static func _new_mission() -> Dictionary:
 	var used := Save.missions.map(func(m): return m.type)
-	var options := TYPES.filter(func(t): return not used.has(t))
+	var options := TYPES.filter(func(t): return not used.has(t) and Save.best >= NEEDS_BEST.get(t, 0))
 	var type: String = options[randi() % options.size()]
 	var lv: int = Save.mission_level
 	var goal := 0
@@ -68,4 +74,6 @@ static func _new_mission() -> Dictionary:
 		"near": goal = 1 + lv / 3
 		"boosts": goal = 2 + lv / 3
 		"region": goal = mini(1 + lv / 2, GameData.BIOMES.size() - 1)
+		"dodges": goal = 2 + lv / 3
+		"hammers": goal = 1 + lv / 4
 	return {"type": type, "goal": goal, "reward": 60 + 40 * lv}

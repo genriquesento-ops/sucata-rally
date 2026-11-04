@@ -5,12 +5,13 @@
     {
       "id": "reta",
       "peso": [3.0, -1.5],
-      "depois": ["reta", "lombadas", "salto", "rampa", "pedras", "boost", "oleo", "serras", "martelo"]
+      "depois": ["reta", "lombadas", "salto", "rampa", "pedras", "boost", "oleo", "serras", "martelo",
+                 "barris", "ventania", "gelo", "lava", "pulos_lunares"]
     },
     {
       "id": "lombadas",
       "peso": [1.0, 0.0],
-      "depois": ["reta", "pedras", "boost", "oleo"],
+      "depois": ["reta", "pedras", "boost", "oleo", "gelo", "lava", "ventania", "pulos_lunares"],
       "altura": {"onda": {"de": 5, "ate": 35, "periodo": 6, "amplitude": 0.5}}
     },
     {
@@ -37,7 +38,7 @@
     {
       "id": "pedras",
       "peso": [0.4, 1.6],
-      "depois": ["reta", "lombadas", "boost"],
+      "depois": ["reta", "lombadas", "boost", "gelo", "lava", "ventania"],
       "moedas": false,
       "dica": "rocks",
       "objetos": [
@@ -62,7 +63,7 @@
       "dica": "oil",
       "objetos": [
         {"tipo": "oleo", "quantidade": [2, 3], "z": [8, 32], "x": [-4.5, 4.5], "escala": [0.9, 1.2],
-         "girar": true, "altura_extra": 0.03, "faixa_livre": {"faixas": [-3, 0, 3], "folga": 3.0},
+         "girar": true, "no_chao": true, "altura_extra": 0.03, "faixa_livre": {"faixas": [-3, 0, 3], "folga": 3.8},
          "longe": {"quantidade": 4}}
       ]
     },
@@ -89,6 +90,64 @@
         {"tipo": "martelo", "z": 20, "x": 0, "alinhar": true, "params": {"angulo": 60, "periodo": [2.2, 3.0]},
          "longe": {"params": {"periodo": 0.65, "angulo": 1.25}}}
       ]
+    },
+    {
+      "id": "barris",
+      "peso": [0.4, 1.0],
+      "desde": 900,
+      "depois": ["reta", "lombadas"],
+      "dica": "barrel",
+      "objetos": [
+        {"tipo": "barril", "z": 20, "x_escolha": [-3, 0, 3], "alinhar": true, "amostrar_chao": [-14, 14],
+         "params": {"velocidade": [5, 7]}, "longe": {"params": {"velocidade": 1.4}}},
+        {"tipo": "barril", "z": 20, "x_escolha": [-3, 0, 3], "alinhar": true, "amostrar_chao": [-14, 14],
+         "chance": 0.5, "params": {"velocidade": [5, 7]}, "longe": {"chance": 1.0, "params": {"velocidade": 1.4}}}
+      ]
+    },
+    {
+      "id": "ventania",
+      "peso": [2.5, 0.5],
+      "regioes": ["Deserto"],
+      "depois": ["reta", "pedras"],
+      "dica": "wind",
+      "objetos": [
+        {"tipo": "vento", "z": 20, "x_escolha": [-7, 7], "alinhar": true,
+         "params": {"ligado": [2.5, 3.5], "desligado": [1.5, 2.5]}, "longe": {"params": {"desligado": 0.6}}}
+      ]
+    },
+    {
+      "id": "gelo",
+      "peso": [2.5, 0.5],
+      "regioes": ["Neve"],
+      "depois": ["reta", "lombadas", "salto"],
+      "dica": "ice",
+      "objetos": [
+        {"tipo": "gelo", "quantidade": [2, 4], "z": [6, 34], "x": [-4.5, 4.5], "escala": [1.0, 1.4],
+         "girar": true, "no_chao": true, "altura_extra": 0.03, "faixa_livre": {"faixas": [-3, 0, 3], "folga": 3.8},
+         "longe": {"quantidade": 5}}
+      ]
+    },
+    {
+      "id": "lava",
+      "peso": [2.5, 0.5],
+      "regioes": ["Vulcão"],
+      "depois": ["reta", "salto", "rampa"],
+      "dica": "lava",
+      "objetos": [
+        {"tipo": "lava", "quantidade": [2, 3], "z": [8, 32], "x": [-4.5, 4.5], "escala": [0.9, 1.2],
+         "girar": true, "no_chao": true, "altura_extra": 0.03, "faixa_livre": {"faixas": [-3, 0, 3], "folga": 3.8},
+         "longe": {"quantidade": 4}}
+      ]
+    },
+    {
+      "id": "pulos_lunares",
+      "peso": [2.5, 0.0],
+      "regioes": ["Lua"],
+      "depois": ["reta", "boost"],
+      "moedas": false,
+      "dica": "moon",
+      "altura": {"onda": {"de": 4, "ate": 36, "periodo": 16, "amplitude": 2.2}},
+      "arcos": [{"x": 0, "de": 10, "ate": 22, "altura": 4.5}, {"x": 0, "de": 26, "ate": 38, "altura": 4.5}]
     }
   ]
 }

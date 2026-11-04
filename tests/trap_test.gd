@@ -3,16 +3,21 @@ extends SceneTree
 ## e confere o evento que chega na corrida (bateu, desviou, óleo, boost).
 ##   godot --headless --path . --script res://tests/trap_test.gd
 
-const SECONDS := 4.0
+const SECONDS := 5.5
 
 ## [nome, tipo, params, x do carro, estágio do carro, evento esperado]
 const CASES := [
 	["óleo no meio", "oleo", {}, 0.0, 0, "oil"],
+	["gelo no meio", "gelo", {}, 0.0, 0, "ice"],
+	["lava no meio", "lava", {}, 0.0, 0, "lava"],
 	["boost no meio", "boost", {}, 0.0, 0, "boost"],
 	["serra parada no meio", "serra", {"amplitude": 0.0}, 0.0, 0, "hit"],
 	["serra parada, carro do lado", "serra", {"amplitude": 0.0}, 3.5, 0, "dodge"],
 	["martelo parado (Rolimã)", "martelo", {"angulo": 0.0}, 0.0, 0, "hit"],
 	["martelo parado (Monstro)", "martelo", {"angulo": 0.0}, 0.0, 3, "hit"],
+	["barril na faixa do carro", "barril", {}, 0.0, 0, "hit"],
+	["barril em outra faixa", "barril", {}, 3.5, 0, "dodge"],
+	["ventilador ligado", "vento", {"off": -7.0, "ligado": 30.0}, 0.0, 0, "wind"],
 ]
 
 
@@ -66,7 +71,8 @@ func _next() -> void:
 	Obstacle.clock = 0.0
 	var params: Dictionary = c[2].duplicate()
 	params["fase"] = 0.0
-	_world.add_child(ObstacleFactory.create(c[1], Transform3D(Basis(), Vector3(0, 0, 25)), params))
+	var x: float = params.get("off", 0.0)
+	_world.add_child(ObstacleFactory.create(c[1], Transform3D(Basis(), Vector3(x, 0, 25)), params))
 
 
 func _physics_process(delta: float) -> bool:
@@ -81,7 +87,7 @@ func _physics_process(delta: float) -> bool:
 		var ok: bool = _rec.events.has(c[5])
 		if not ok:
 			_failed += 1
-		print("%s %s: esperado %s, recebido %s (z do carro %.1f)" % [
-			"OK  " if ok else "FALHOU", c[0], c[5], _rec.events, _car.position.z])
+		print("%s %s: esperado %s, recebido %s (carro em x %.1f, z %.1f)" % [
+			"OK  " if ok else "FALHOU", c[0], c[5], _rec.events, _car.position.x, _car.position.z])
 		_next()
 	return false

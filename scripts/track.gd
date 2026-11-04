@@ -83,6 +83,8 @@ static func _weight(kind: int, z: float) -> float:
 	var d: Dictionary = defs[kind]
 	if z < float(d.get("desde", 0.0)):
 		return 0.0
+	if d.has("regioes") and not d.regioes.has(GameData.BIOMES[GameData.biome_index(z)].title):
+		return 0.0
 	var w: Array = d.get("peso", [1.0, 0.0])
 	return maxf(0.0, w[0] + w[1] * Terrain.difficulty(z))
 
@@ -194,10 +196,16 @@ func placements(terrain: Terrain, index: int) -> Dictionary:
 				yaw = atan2(terrain.path_x(z + 1.0) - terrain.path_x(z - 1.0), 2.0)
 			elif spec.get("girar", false):
 				yaw = spin
-			var basis := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, deg_to_rad(spec.get("inclinacao", 0.0)))
+			var basis := Basis(Vector3.UP, yaw)
+			if spec.get("no_chao", false):
+				basis = _on_slope(basis, terrain, x, z)  # deitado no chão (manchas: óleo, gelo, lava)
+			basis = basis * Basis(Vector3.RIGHT, deg_to_rad(spec.get("inclinacao", 0.0)))
 			var origin := Vector3(x, terrain.height(x, z) + float(spec.get("altura_extra", 0.0)), z)
 			params["escala"] = size
 			params["fase"] = rng.randf() * TAU
+			params["off"] = off
+			if spec.has("amostrar_chao"):
+				params["chao"] = _ground_profile(terrain, Transform3D(basis, origin), spec.amostrar_chao)
 			items.append({"tipo": spec.tipo, "xf": Transform3D(basis, origin), "params": params,
 				"z": z, "off": off, "evitar": ObstacleFactory.avoid(spec.tipo), "arco": spec.get("arco", {})})
 	return {"itens": items, "faixa": lane}
@@ -214,6 +222,24 @@ static func _count(v: Variant, rng: RandomNumberGenerator) -> int:
 	if v is Array:
 		return rng.randi_range(int(v[0]), int(v[1]))
 	return int(v)
+
+
+## Gira a base para o "para cima" seguir a inclinação do chão em (x, z), mantendo o giro.
+static func _on_slope(basis: Basis, terrain: Terrain, x: float, z: float) -> Basis:
+	var n := Vector3(terrain.height(x - 1.0, z) - terrain.height(x + 1.0, z), 2.0,
+		terrain.height(x, z - 1.0) - terrain.height(x, z + 1.0)).normalized()
+	var bx := (basis.x - n * basis.x.dot(n)).normalized()
+	return Basis(bx, n, bx.cross(n))
+
+
+## Altura do chão (relativa ao objeto) a cada metro do eixo z local, de `range[0]` a
+## `range[1]`: para obstáculos que andam pela trilha (barril) seguirem o relevo.
+static func _ground_profile(terrain: Terrain, xf: Transform3D, range_z: Array) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	for dz in range(int(range_z[0]), int(range_z[1]) + 1):
+		var p := xf * Vector3(0, 0, dz)
+		out.append(terrain.height(p.x, p.z) - xf.origin.y)
+	return out
 
 
 ## Objeto que caiu na faixa livre: empurra para fora dela (do lado mais perto, ou do outro

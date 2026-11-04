@@ -19,6 +19,11 @@ const TIPS := {
 	"oil": "óleo na pista! Em cima da mancha escura o carro desliza. Desvie dela.",
 	"saw": "serra rolando! Passe quando ela estiver do outro lado. Desviar vale moedas.",
 	"hammer": "martelo balançando! Passe por baixo no momento certo e ganhe moedas.",
+	"barrel": "barris rolando na sua direção! Mude de faixa para desviar.",
+	"wind": "ventania! Quando o ventilador ligar, segure o carro virando contra o vento.",
+	"ice": "gelo na pista! Em cima das placas azuis o carro escorrega.",
+	"lava": "lava! Passar por cima queima combustível. Desvie das poças laranja.",
+	"moon": "gravidade baixa! Nos morros da Lua o carro voa longe. Pouse reto.",
 }
 
 var auto_drive := false  # usado pelo modo demo
@@ -55,7 +60,7 @@ var _air_time := 0.0
 var _combo := 0
 var _combo_time := 0.0
 var _trick_coins := 0
-var _counts := {"jumps": 0, "perfect": 0, "near": 0, "boosts": 0, "dodges": 0}
+var _counts := {"jumps": 0, "perfect": 0, "near": 0, "boosts": 0, "dodges": 0, "hammers": 0, "hits": 0, "slips": 0}
 var _layouts := {}  # trecho -> posições dos objetos (cache, para o piloto automático)
 
 # impacto
@@ -69,7 +74,8 @@ func _ready() -> void:
 	Obstacle.run = self
 	Obstacle.clock = 0.0
 	# monta as malhas dos obstáculos já na largada: a 1ª serra/martelo não trava a corrida
-	for kind in ["ramp", "boulder", "boost_pad", "oil", "saw", "saw_rail", "hammer_frame", "hammer_arm"]:
+	for kind in ["ramp", "boulder", "boost_pad", "oil", "saw", "saw_rail", "hammer_frame", "hammer_arm",
+			"ice_patch", "lava", "barrel", "barrel_gate", "fan_body", "fan_blades"]:
 		Props.mesh(kind)
 	# qualidade baixa (opções): metade dos objetos do cenário, sem antisserrilhado e sem sombras
 	var high: bool = Save.settings.quality == 1
@@ -259,15 +265,37 @@ func on_obstacle(event: String, data := {}) -> void:
 			_trick("RASPANDO!", 4)
 		"dodge":
 			_counts.dodges += 1
+			if data.get("tipo", "") == "martelo":
+				_counts.hammers += 1
 			_trick(data.text, data.coins)
 			Effects.sparkle(self, _car.global_position + Vector3.UP, UiKit.GOLD)
 			_hud.flash(Color(1.0, 0.85, 0.2, 0.18))
 		"oil":
+			_counts.slips += 1
 			_hud.toast("ÓLEO!")
 			_hud.flash(Color(0.3, 0.1, 0.5, 0.25))
 			Sfx.play("slip")
 			_vibrate(60)
+		"ice":
+			_counts.slips += 1
+			_hud.toast("GELO!")
+			_hud.flash(Color(0.7, 0.9, 1.0, 0.3))
+			Sfx.play("slip", 0.15)
+			_vibrate(40)
+		"lava":
+			_counts.slips += 1
+			fuel = maxf(0.0, fuel - _stats.fuel * float(data.get("fuel", 0.15)))
+			_hud.toast("QUEIMOU! −combustível")
+			_hud.flash(Color(1.0, 0.25, 0.0, 0.45))
+			Effects.sparks(self, data.get("pos", _car.global_position))
+			Sfx.play("sizzle")
+			_vibrate(120)
+			_combo_time = 0.0
+		"wind":
+			_hud.toast("VENTANIA!")
+			Sfx.play("wind")
 		"hit":
+			_counts.hits += 1
 			_shake = maxf(_shake, 0.8)
 			_vibrate(150)
 			Sfx.play("clang")

@@ -195,7 +195,7 @@ static func _build(kind: String) -> Mesh:
 				_part(st, _box(Vector3(1.3, 0.04, 0.25)), Vector3(0.45, 0.05, zc), Vector3.ONE, Color("6ff0ff"), Vector3(0, -0.7, 0))
 			glow = Color("30c8ff")
 		"oil":  # mancha escura com borda molhada e manchas "arco-íris" (o nó escala x e z)
-			_part(st, _cyl(2.4, 2.4, 0.03, 20), Vector3(0, -0.01, 0), Vector3.ONE, Color("4a4258"))
+			_part(st, _cyl(2.4, 2.4, 0.02, 20), Vector3(0, -0.01, 0), Vector3.ONE, Color("3a3442"))
 			_part(st, _cyl(2.2, 2.2, 0.04, 20), Vector3.ZERO, Vector3.ONE, Color("120d1a"))
 			# reflexos em faixas compridas e tortas (escala em x/z), não em círculos concêntricos
 			_part(st, _cyl(1.0, 1.0, 0.04, 12), Vector3(0.6, 0.006, 0.4), Vector3(1.4, 1, 0.45), Color("3a2860"), Vector3(0, 0.5, 0))
@@ -204,6 +204,55 @@ static func _build(kind: String) -> Mesh:
 			_part(st, _cyl(0.5, 0.5, 0.04, 10), Vector3(0.9, 0.012, -0.9), Vector3(1.3, 1, 0.3), Color("2a5048"), Vector3(0, 1.1, 0))
 			rough = 0.05
 			glow = Color("241040")
+		"ice_patch":  # placa de gelo azulada e lisa, com riscos claros
+			# bem mais azul que a neve e a trilha da Neve (cinza-azulada), com borda escura
+			_part(st, _cyl(2.3, 2.3, 0.03, 18), Vector3(0, -0.01, 0), Vector3.ONE, Color("2f6f9a"))
+			_part(st, _cyl(2.1, 2.1, 0.04, 18), Vector3.ZERO, Vector3.ONE, Color("5cc4ec"))
+			for k in 4:
+				_part(st, _cyl(0.5, 0.5, 0.04, 8), Vector3(-1.2 + k * 0.8, 0.008, -0.6 + (k % 2) * 1.1), Vector3(2.2, 1, 0.12), Color("f2fbff"), Vector3(0, 0.4 + k * 0.3, 0))
+			rough = 0.03
+			glow = Color("12304a")
+		"lava":  # poça de lava: casca escura por fora, laranja brilhante por dentro
+			_part(st, _cyl(2.3, 2.3, 0.05, 18), Vector3(0, -0.01, 0), Vector3.ONE, Color("2a1a14"))
+			_part(st, _cyl(1.95, 1.95, 0.06, 18), Vector3.ZERO, Vector3.ONE, Color("ff6a1a"))
+			for k in 5:
+				var a := k * TAU / 5.0 + 0.4
+				_part(st, _cyl(0.35, 0.35, 0.07, 8), Vector3(cos(a), 0.01, sin(a)) * 1.1, Vector3(1.4, 1, 0.8), Color("ffd040"), Vector3(0, a, 0))
+			for k in 3:
+				var a := k * TAU / 3.0
+				_part(st, _cyl(0.3, 0.3, 0.08, 6), Vector3(cos(a), 0.01, sin(a)) * 0.45, Vector3.ONE, Color("3a2018"))
+			rough = 0.4
+			glow = Color("ff4a00")
+		"barrel":  # barril deitado (eixo em x), com aros, faixa amarela e uma listra para ver rolar
+			var side := Vector3(0, 0, PI / 2.0)
+			_part(st, _cyl(0.55, 0.55, 1.1, 14), Vector3.ZERO, Vector3.ONE, Color("c0392b"), side)
+			for x in [-0.32, 0.32]:
+				_part(st, _cyl(0.575, 0.575, 0.08, 14), Vector3(x, 0, 0), Vector3.ONE, Color("2a2a2e"), side)
+			_part(st, _cyl(0.565, 0.565, 0.2, 14), Vector3.ZERO, Vector3.ONE, Color("f2c230"), side)
+			_part(st, _box(Vector3(1.12, 0.1, 0.14)), Vector3(0, 0.53, 0), Vector3.ONE, Color("f0f0f0"))
+		"barrel_gate":  # portão de onde saem os barris
+			for side in [-1.0, 1.0]:
+				_part(st, _box(Vector3(0.4, 3.0, 0.4)), Vector3(side * 5.2, 1.5, 0), Vector3.ONE, Color("5a5f6a"))
+			_part(st, _box(Vector3(10.8, 0.5, 0.5)), Vector3(0, 3.0, 0), Vector3.ONE, Color("f2c230"))
+			for k in 7:
+				_part(st, _box(Vector3(0.5, 0.52, 0.52)), Vector3(-4.5 + k * 1.5, 3.0, 0), Vector3.ONE, Color("26262a"))
+			_part(st, _box(Vector3(1.4, 1.4, 1.4)), Vector3(4.6, 3.9, 0.2), Vector3.ONE, Color("c0392b"), Vector3(0, 0.3, 0))
+		"fan_body":  # ventilador: poste, aro e motor, com a boca virada para +Z
+			_part(st, _box(Vector3(1.4, 0.3, 1.4)), Vector3(0, 0.15, 0), Vector3.ONE, Color("3a3d44"))
+			_part(st, _cyl(0.3, 0.35, 2.6, 8), Vector3(0, 1.3, 0), Vector3.ONE, Color("6a6f7a"))
+			var ring := TorusMesh.new()
+			ring.inner_radius = 1.35
+			ring.outer_radius = 1.6
+			ring.rings = 20
+			ring.ring_segments = 6
+			_part(st, ring, Vector3(0, 2.6, 0), Vector3.ONE, Color("d8d0c0"), Vector3(PI / 2.0, 0, 0))
+			_part(st, _cyl(0.55, 0.55, 0.8, 10), Vector3(0, 2.6, -0.45), Vector3.ONE, Color("555a64"), Vector3(PI / 2.0, 0, 0))
+		"fan_blades":  # 4 pás no plano xy (giram em torno de z)
+			for k in 4:
+				var a := k * PI / 2.0
+				_part(st, _box(Vector3(0.36, 1.2, 0.06)), Vector3(-sin(a), cos(a), 0) * 0.68, Vector3.ONE,
+					Color("f2c230") if k % 2 == 0 else Color("c0392b"), Vector3(0, 0.25, a))
+			_part(st, _cyl(0.22, 0.22, 0.2, 10), Vector3.ZERO, Vector3.ONE, Color("333338"), Vector3(PI / 2.0, 0, 0))
 		"saw":  # disco de pé virado para +Z (eixo em z), dentes e raios coloridos para ver girar
 			var face := Vector3(PI / 2.0, 0, 0)
 			_part(st, _cyl(1.3, 1.3, 0.3, 24), Vector3.ZERO, Vector3.ONE, Color("b8bec8"), face)

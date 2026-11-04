@@ -46,7 +46,7 @@ func _physics_process(_delta: float) -> void:
 	elif _seen and local.z > 1.5:
 		_done = true
 		if not _hit:
-			_emit("dodge", {"text": "DESVIOU DA SERRA!", "coins": 4})
+			_emit("dodge", {"text": "DESVIOU DA SERRA!", "coins": 4, "tipo": "serra"})
 
 
 func _place() -> void:

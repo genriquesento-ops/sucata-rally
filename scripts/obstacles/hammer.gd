@@ -46,7 +46,7 @@ func _physics_process(_delta: float) -> void:
 	elif _seen and local.z > 1.5:
 		_done = true
 		if not _hit:
-			_emit("dodge", {"text": "PASSOU DO MARTELO!", "coins": 5})
+			_emit("dodge", {"text": "PASSOU DO MARTELO!", "coins": 5, "tipo": "martelo"})
 
 
 func _angle_at(t: float) -> float:

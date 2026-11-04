@@ -12,6 +12,7 @@ regras `depois` de cada trecho.
 | `id` | nome único do trecho | `"oleo"` |
 | `peso` | chance no sorteio: `[base, extra]`. O peso é base + extra × dificuldade, e a dificuldade vai de 0 (até 300 m) a 1 (bem longe). | `[0.5, 0.8]` |
 | `desde` | não aparece antes desta distância, em metros | `300` |
+| `regioes` | só aparece nestas regiões | `["Neve"]` |
 | `depois` | ids dos trechos que podem vir logo depois deste | `["reta", "pedras"]` |
 | `moedas` | `false` tira a fileira de moedas do chão | `false` |
 | `dica` | dica mostrada na primeira vez que o trecho aparece. Os textos ficam em `TIPS`, em `run.gd`. | `"oil"` |
@@ -33,7 +34,7 @@ Um número fixo ou `[mín, máx]`, que é sorteado.
 
 | campo | o que faz |
 |---|---|
-| `tipo` | qual objeto: `rampa`, `pedregulho`, `boost`, `oleo`, `serra`, `martelo` |
+| `tipo` | qual objeto: `rampa`, `pedregulho`, `boost`, `oleo`, `gelo`, `lava`, `serra`, `martelo`, `barril`, `vento` |
 | `z` | posição ao longo do trecho (0 a 40 m) |
 | `x` | distância do centro da trilha (negativo = um lado, positivo = outro) |
 | `x_escolha` | sorteia um valor desta lista em vez de usar `x` |
@@ -44,9 +45,11 @@ Um número fixo ou `[mín, máx]`, que é sorteado.
 | `girar` | `true` gira o objeto ao acaso |
 | `inclinacao` | inclinação para a frente, em graus (rampa: -14) |
 | `altura_extra` | metros acima do chão |
+| `no_chao` | `true` deita o objeto na inclinação do chão (manchas: óleo, gelo, lava) |
+| `amostrar_chao` | `[de, ate]`: mede a altura do chão a cada metro, em z, de `de` a `ate` metros a partir do objeto. É para obstáculos que andam pela trilha seguirem o relevo (barril). |
 | `faixa_livre` | `{"faixas": [-3, 0, 3], "folga": 2.4}` sorteia uma faixa que fica sempre livre. Os objetos que cairiam nela são empurrados para o lado. |
 | `arco` | arco de moedas depois do objeto: `de`, `ate` (metros a partir dele) e `altura` |
-| `params` | ajustes do próprio obstáculo, por exemplo `serra`: `amplitude`, `periodo`; `martelo`: `angulo`, `periodo` |
+| `params` | ajustes do próprio obstáculo, por exemplo `serra`: `amplitude`, `periodo`; `martelo`: `angulo`, `periodo`; `barril`: `velocidade`; `vento`: `ligado`, `desligado` (segundos); `oleo`/`gelo`: `aderencia`, `segundos`, `giro` |
 | `longe` | como o objeto fica na dificuldade máxima (bem longe), misturado conforme a distância: `chance` e `quantidade` passam a ser esse valor, e `params` são multiplicados. Ex.: `{"params": {"periodo": 0.6}}` deixa a serra 40% mais rápida lá longe. |
 
 ## Criando um tipo de obstáculo novo (código)
@@ -56,6 +59,8 @@ Um número fixo ou `[mín, máx]`, que é sorteado.
    e `_trigger`.
 2. Desenhe a malha em `Props._build()` (`props.gd`) com um nome novo.
 3. Registre o tipo em `TYPES` de `scripts/obstacles/factory.gd`. É a fábrica, e é só uma linha.
+   Um mesmo script pode servir a vários tipos, com `params` padrão diferentes. Exemplo: o
+   `gelo` usa o script do óleo, com outra malha e menos derrapagem.
 4. Use o tipo num trecho de `data/trechos.json`.
 
 ### Regras
@@ -69,5 +74,7 @@ Um número fixo ou `[mín, máx]`, que é sorteado.
   - `boost`;
   - `near` (passou raspando);
   - `dodge` com `{"text", "coins"}` (desviou);
-  - `oil`;
+  - `oil`, `ice`;
+  - `lava` com `{"fuel"}` (fração do tanque que queima);
+  - `wind`;
   - `hit` (bateu).
