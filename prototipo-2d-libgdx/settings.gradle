@@ -1,0 +1,2 @@
+rootProject.name = 'SucataRally'
+include 'core', 'lwjgl3', 'android'

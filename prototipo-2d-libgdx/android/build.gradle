@@ -1,0 +1,83 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.sucatarally'
+    compileSdk 36
+    buildToolsVersion '36.1.0'
+
+    defaultConfig {
+        applicationId 'com.sucatarally'
+        minSdk 21
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['../assets']
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    // Duas versões do mesmo jogo:
+    //  - foss: 100% software livre, é a que o F-Droid compila.
+    //  - play: para a Google Play; único lugar onde SDKs proprietários podem entrar
+    //          (sempre como playImplementation, nunca implementation).
+    flavorDimensions = ['store']
+    productFlavors {
+        foss {
+            dimension 'store'
+        }
+        play {
+            dimension 'store'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+configurations { natives }
+
+dependencies {
+    implementation project(':core')
+    implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+
+    for (abi in ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64']) {
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-$abi"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-$abi"
+    }
+
+    // Exemplo: playImplementation 'com.google.android.gms:play-services-games-v2:...'
+}
+
+// Extrai as bibliotecas nativas (.so) do libGDX para android/libs/<abi>/
+tasks.register('copyAndroidNatives') {
+    doFirst {
+        configurations.natives.copy().files.each { jar ->
+            def abi = ['armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'].find { jar.name.endsWith("natives-${it}.jar") }
+            if (abi != null) {
+                def outputDir = file("libs/$abi")
+                outputDir.mkdirs()
+                copy {
+                    from zipTree(jar)
+                    into outputDir
+                    include '*.so'
+                }
+            }
+        }
+    }
+}
+
+tasks.matching { it.name.contains('merge') && it.name.contains('JniLibFolders') }.configureEach {
+    dependsOn 'copyAndroidNatives'
+}

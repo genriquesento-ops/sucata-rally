@@ -1,0 +1,17 @@
+# Godot
+.godot/
+build/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# histórico das conversas com o Claude (privado, fica só no PC)
+docs/historico-*.zip
+
+# protótipo 2D (Gradle)
+prototipo-2d-libgdx/.gradle/
+prototipo-2d-libgdx/build/
+prototipo-2d-libgdx/**/build/
+prototipo-2d-libgdx/local.properties
+prototipo-2d-libgdx/android/libs/

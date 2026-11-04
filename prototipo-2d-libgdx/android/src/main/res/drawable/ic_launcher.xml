@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícone provisório: um carrinho sobre um morro. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path android:fillColor="#7EC8F0" android:pathData="M0,0h48v48h-48z" />
+    <path android:fillColor="#5A8F3C" android:pathData="M0,36 Q12,26 24,32 T48,30 V48 H0 Z" />
+    <path android:fillColor="#C8873A" android:pathData="M12,22h22v7h-22z" />
+    <path android:fillColor="#E8D6B0" android:pathData="M17,17h8v5h-8z" />
+    <path android:fillColor="#222222" android:pathData="M16,31m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path android:fillColor="#222222" android:pathData="M31,31m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+</vector>

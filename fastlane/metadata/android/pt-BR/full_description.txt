@@ -1,0 +1,9 @@
+Comece num carrinho de rolimã e chegue até um foguete!
+
+Dirija em 3D por um mundo gerado na hora, seguindo uma trilha que fica mais difícil quanto mais longe você vai. Passe por campo, deserto, neve, vulcão e até pela Lua, com gravidade baixa.
+
+* Junte moedas e galões de combustível pelo caminho
+* Melhore motor, pneus, suspensão, tanque e ímã de moedas
+* Evolua o carro em 5 estágios
+* Sem anúncios, sem rastreamento, sem internet
+* Código aberto

@@ -1,0 +1,25 @@
+# Rascunho do arquivo metadata/com.sucatarally.yml para o repositório fdroiddata.
+# Troque SEU_USUARIO pelo endereço real do repositório antes de enviar.
+Categories:
+  - Games
+License: MIT
+SourceCode: https://codeberg.org/SEU_USUARIO/sucata-rally
+IssueTracker: https://codeberg.org/SEU_USUARIO/sucata-rally/issues
+
+AutoName: Sucata Rally
+
+RepoType: git
+Repo: https://codeberg.org/SEU_USUARIO/sucata-rally.git
+
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: v0.1.0
+    subdir: android
+    gradle:
+      - foss
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1

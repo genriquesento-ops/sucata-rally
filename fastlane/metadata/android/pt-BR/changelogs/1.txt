@@ -1,0 +1,1 @@
+Primeira versão: mundo 3D procedural, 5 regiões, 5 peças e 5 estágios de evolução.
