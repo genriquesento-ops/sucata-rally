@@ -2,8 +2,6 @@ extends SceneTree
 ## Confere as regras da sequência de trechos (WFC 1D) e fotografa um trecho de cada tipo.
 ##   godot --path . --script res://tests/track_shots.gd -- --out=C:/pasta
 
-const NAMES := ["reta", "lombadas", "salto", "rampa", "pedras", "boost"]
-
 var _out := ""
 var _terrain: Terrain
 var _cam: Camera3D
@@ -38,10 +36,12 @@ func _initialize() -> void:
 	_cam.fov = 70.0
 	root.add_child(_cam)
 
-	for kind in [Track.SALTO, Track.RAMPA, Track.PEDRAS, Track.BOOST, Track.LOMBADAS]:
+	for d: Dictionary in Track.defs:
+		if d.id == "reta":
+			continue
 		for i in Track.COUNT:
-			if _terrain.track.kind_of(i) == kind and i * Track.SEGMENT < 700.0 * 4.0:
-				_spots.append([i, NAMES[kind]])
+			if _terrain.track.kind_of(i) == d._n and i * Track.SEGMENT < 700.0 * 4.0:
+				_spots.append([i, d.id])
 				break
 	_next()
 
@@ -49,16 +49,24 @@ func _initialize() -> void:
 func _check_rules() -> void:
 	var counts := {}
 	var bad := 0
+	var early := 0  # trechos antes do "desde"
 	for i in Track.COUNT:
-		var k := _terrain.track.kind_of(i)
-		counts[NAMES[k]] = counts.get(NAMES[k], 0) + 1
-		if i + 1 < Track.COUNT and not Track.NEXT[k].has(_terrain.track.kind_of(i + 1)):
+		var d := _terrain.track.segment_of(i)
+		counts[d.id] = counts.get(d.id, 0) + 1
+		if i + 1 < Track.COUNT and not d._depois.has(_terrain.track.kind_of(i + 1)):
 			bad += 1
+		if i * Track.SEGMENT < d.get("desde", 0.0):
+			early += 1
 	var first := []
-	for i in 25:
-		first.append(NAMES[_terrain.track.kind_of(i)])
-	print("regras violadas: %d | contagem: %s" % [bad, counts])
-	print("primeiros 25 trechos: %s" % ", ".join(first))
+	for i in 40:
+		first.append(_terrain.track.segment_of(i).id)
+	print("regras violadas: %d | antes do 'desde': %d | contagem: %s" % [bad, early, counts])
+	print("primeiros 40 trechos: %s" % ", ".join(first))
+	var objects := {}
+	for i in 100:
+		for item: Dictionary in _terrain.track.placements(_terrain, i).itens:
+			objects[item.tipo] = objects.get(item.tipo, 0) + 1
+	print("objetos nos primeiros 4 km: %s" % objects)
 
 
 func _next() -> void:

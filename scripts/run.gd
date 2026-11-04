@@ -1,15 +1,25 @@
 class_name Run
 extends Node3D
 ## Uma corrida: ir o mais longe possível (+Z) até acabar o combustível ou capotar.
-## Manobras dão moedas extras: tempo no ar, pouso perfeito e passar raspando por pedras,
-## com combo multiplicador se encadeadas em até 3 s.
+## Manobras dão moedas extras: tempo no ar, pouso perfeito, passar raspando por pedras e
+## passar pelas armadilhas sem bater, com combo multiplicador se encadeadas em até 3 s.
+## Os obstáculos (scripts/obstacles/) avisam o que aconteceu por on_obstacle().
 
 signal finished
 
 const START_Z := 5.0
 const AIR_MIN := 0.7  # segundos no ar para contar como salto
 const COMBO_WINDOW := 3.0
-const NEAR_MISS_GAP := 1.6  # metros entre a lateral do carro e a pedra
+
+## Dicas da primeira vez, pela "dica" do trecho em data/trechos.json.
+const TIPS := {
+	"jump": "salto à frente! Tempo no ar vale moedas, e pousar reto dá bônus de pouso perfeito.",
+	"rocks": "pedras! Desvie pela faixa livre. Passar raspando sem bater dá bônus.",
+	"boost": "passe por cima da placa azul para ganhar um BOOST.",
+	"oil": "óleo na pista! Em cima da mancha escura o carro desliza. Desvie dela.",
+	"saw": "serra rolando! Passe quando ela estiver do outro lado. Desviar vale moedas.",
+	"hammer": "martelo balançando! Passe por baixo no momento certo e ganhe moedas.",
+}
 
 var auto_drive := false  # usado pelo modo demo
 var daily := false  # mapa do dia (semente fixa pela data); definir antes de entrar na cena
@@ -45,10 +55,8 @@ var _air_time := 0.0
 var _combo := 0
 var _combo_time := 0.0
 var _trick_coins := 0
-var _counts := {"jumps": 0, "perfect": 0, "near": 0, "boosts": 0}
-var _last_boost := -1  # índice do último trecho de boost usado (cada placa vale uma vez)
-var _near_done := {}  # pedras já contadas: "trecho:n"
-var _layouts := {}  # trecho -> layout das pedras (cache)
+var _counts := {"jumps": 0, "perfect": 0, "near": 0, "boosts": 0, "dodges": 0}
+var _layouts := {}  # trecho -> posições dos objetos (cache, para o piloto automático)
 
 # impacto
 var _shake := 0.0
@@ -58,6 +66,11 @@ var _prev_speed := 0.0
 func _ready() -> void:
 	var seed_value := GameData.daily_seed() if daily else randi()
 	_terrain_seed = seed_value
+	Obstacle.run = self
+	Obstacle.clock = 0.0
+	# monta as malhas dos obstáculos já na largada: a 1ª serra/martelo não trava a corrida
+	for kind in ["ramp", "boulder", "boost_pad", "oil", "saw", "saw_rail", "hammer_frame", "hammer_arm"]:
+		Props.mesh(kind)
 	# qualidade baixa (opções): metade dos objetos do cenário, sem antisserrilhado e sem sombras
 	var high: bool = Save.settings.quality == 1
 	Props.density_scale = 1.0 if high else 0.5
@@ -77,6 +90,7 @@ func _ready() -> void:
 	_car.setup(Save.tier, _stats, Save.paint)
 	_car.position = Vector3(0, _terrain.height(0, START_Z) + 1.5, START_Z)
 	add_child(_car)
+	Obstacle.car = _car
 
 	_cam = Camera3D.new()
 	_cam.fov = 70.0
@@ -100,6 +114,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	# o carro acelera sozinho enquanto houver combustível; o jogador só dirige
 	var running := _end_reason.is_empty()
+	Obstacle.clock += delta
 	_car.brake_input = 0.0
 	if not running:
 		_car.throttle = 0.0
@@ -126,9 +141,7 @@ func _physics_process(delta: float) -> void:
 	_terrain.update(pos)
 
 	if running:
-		_check_boost_pad(pos)
 		_check_air(delta)
-		_check_near_miss(pos)
 		_check_impact()
 		_check_tips(pos)
 		_combo_time -= delta
@@ -155,16 +168,40 @@ func _notification(what: int) -> void:
 		_finish("Pausado")
 
 
-## Piloto automático: segue a trilha olhando 12 m à frente.
+## Piloto automático: segue a trilha olhando 12 m à frente e desvia do que tem "evitar"
+## (pedras, óleo): usa a faixa livre do trecho, ou a faixa mais longe dos obstáculos.
 func _auto_steer() -> void:
 	var pos := _car.global_position
 	var look_z := pos.z + 12.0
-	var target_x := _terrain.path_x(look_z)
-	# desvia dos pedregulhos usando a faixa livre (como um jogador faria)
-	if _terrain.track.kind_at(look_z) == Track.PEDRAS:
-		target_x += _layout(_terrain.track.index_at(look_z)).lane
+	var target_x := _terrain.path_x(look_z) + _free_offset(pos.z, look_z)
 	var local := _car.to_local(Vector3(target_x, pos.y, look_z))
 	_car.steer_input = clampf(atan2(local.x, local.z) * 2.0, -1.0, 1.0)
+
+
+func _free_offset(from_z: float, look_z: float) -> float:
+	var track := _terrain.track
+	var blocking := []
+	for index in [track.index_at(from_z), track.index_at(look_z)]:
+		if index < 0:
+			continue
+		var layout := _layout(index)
+		if not is_nan(layout.faixa):
+			return layout.faixa
+		for item: Dictionary in layout.itens:
+			if item.evitar and item.z > from_z and item.z < look_z + 10.0:
+				blocking.append(item.off)
+	if blocking.is_empty():
+		return 0.0
+	var best := 0.0
+	var best_gap := -1.0
+	for lane in [0.0, -3.0, 3.0]:
+		var gap := INF
+		for off: float in blocking:
+			gap = minf(gap, absf(off - lane))
+		if gap > best_gap + 0.5:
+			best_gap = gap
+			best = lane
+	return best
 
 
 ## Ré automática: sem freio na mão, um carro empacado numa pedra ou árvore ficaria
@@ -189,38 +226,49 @@ func _unstick(delta: float) -> void:
 
 func _exit_tree() -> void:
 	Sfx.set_engine(false, 0.0)
+	if Obstacle.run == self:
+		Obstacle.run = null
+		Obstacle.car = null
 
 
 ## Dicas da primeira vez: aparecem uma de cada vez, quando a situação chega.
 func _check_tips(pos: Vector3) -> void:
 	if _hud.showing_tip():
 		return
-	var ahead := _terrain.track.kind_at(pos.z + 35.0)
+	var tip: String = _terrain.track.segment_at(pos.z + 35.0).get("dica", "")
 	if Save.first_time("steer"):
 		_hud.tip("o carro acelera sozinho. Arraste o dedo para os lados para dirigir.")
-	elif ahead in [Track.SALTO, Track.RAMPA] and Save.first_time("jump"):
-		_hud.tip("salto à frente! Tempo no ar vale moedas, e pousar reto dá bônus de pouso perfeito.")
-	elif ahead == Track.PEDRAS and Save.first_time("rocks"):
-		_hud.tip("pedras! Desvie pela faixa livre. Passar raspando sem bater dá bônus.")
-	elif ahead == Track.BOOST and Save.first_time("boost"):
-		_hud.tip("passe por cima da placa azul para ganhar um BOOST.")
+	elif TIPS.has(tip) and Save.first_time(tip):
+		_hud.tip(TIPS[tip])
 	elif fuel < _stats.fuel * 0.5 and Save.first_time("fuel"):
 		_hud.tip("pegue os galões vermelhos: quando o combustível acaba, a corrida termina.")
 
 
-## Passou por cima de uma placa de boost (2,6 x 3 m no centro da trilha)?
-func _check_boost_pad(pos: Vector3) -> void:
-	var track := _terrain.track
-	var index := track.index_at(pos.z)
-	if index < 0 or index == _last_boost or track.kind_of(index) != Track.BOOST:
+## Eventos dos obstáculos da trilha (scripts/obstacles/).
+func on_obstacle(event: String, data := {}) -> void:
+	if not _end_reason.is_empty():
 		return
-	var t := fposmod(pos.z, Track.SEGMENT)
-	if absf(t - Track.BOOST_AT) < 2.0 and absf(pos.x - _terrain.path_x(pos.z)) < 1.8:
-		_last_boost = index
-		_counts.boosts += 1
-		_car.boost()
-		Sfx.play("boost")
-		_hud.toast("BOOST!")
+	match event:
+		"boost":
+			_counts.boosts += 1
+			_car.boost()
+			Sfx.play("boost")
+			_hud.toast("BOOST!")
+		"near":
+			_counts.near += 1
+			_trick("RASPANDO!", 4)
+		"dodge":
+			_counts.dodges += 1
+			_trick(data.text, data.coins)
+		"oil":
+			_hud.toast("ÓLEO!")
+			Sfx.play("slip")
+			_vibrate(60)
+		"hit":
+			_shake = maxf(_shake, 0.7)
+			_vibrate(150)
+			Sfx.play("clang")
+			_combo_time = 0.0  # pancada quebra o combo
 
 
 ## Saltos: conta o tempo no ar e, no pouso, dá moedas; pouso de rodas e reto é "perfeito".
@@ -241,24 +289,6 @@ func _check_air(delta: float) -> void:
 			if _stats.landing_boost:
 				_car.boost(0.4)
 	_air_time = 0.0
-
-
-## Passou raspando (sem bater) ao lado de um pedregulho.
-func _check_near_miss(pos: Vector3) -> void:
-	var index := _terrain.track.index_at(pos.z)
-	if index < 0 or _terrain.track.kind_of(index) != Track.PEDRAS:
-		return
-	var boulders: Array = _layout(index).boulders
-	for n in boulders.size():
-		var key := "%d:%d" % [index, n]
-		var b: Vector3 = boulders[n][0]
-		if _near_done.has(key) or absf(pos.z - b.z) > 0.6:
-			continue
-		_near_done[key] = true
-		var gap := absf(pos.x - b.x) - Props.BOULDER_RADIUS * float(boulders[n][1]) - 0.9
-		if gap > 0.15 and gap < NEAR_MISS_GAP:
-			_counts.near += 1
-			_trick("RASPANDO!", 4)
 
 
 ## Batida: queda brusca de velocidade treme a câmera e vibra o celular.
@@ -283,7 +313,7 @@ func _trick(text: String, coins: int) -> void:
 
 func _layout(index: int) -> Dictionary:
 	if not _layouts.has(index):
-		_layouts[index] = Props.boulder_layout(_terrain, index, _terrain_seed)
+		_layouts[index] = _terrain.track.placements(_terrain, index)
 	return _layouts[index]
 
 
@@ -331,8 +361,8 @@ func _finish(reason: String) -> void:
 
 	var lines := PackedStringArray()
 	lines.append("(%d coletadas, %d de manobras + bônus de distância)" % [run_coins - _trick_coins, _trick_coins])
-	lines.append("Saltos %d · Pousos perfeitos %d · Raspando %d · Boosts %d" % [
-		_counts.jumps, _counts.perfect, _counts.near, _counts.boosts])
+	lines.append("Saltos %d · Pousos perfeitos %d · Raspando %d · Boosts %d · Desvios %d" % [
+		_counts.jumps, _counts.perfect, _counts.near, _counts.boosts, _counts.dodges])
 	var stats := _counts.duplicate()
 	stats["distance"] = distance
 	stats["coins"] = run_coins

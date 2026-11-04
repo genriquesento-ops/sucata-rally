@@ -1,7 +1,8 @@
 class_name Props
 extends RefCounted
 ## Objetos do cenário (árvores, cactos, pinheiros, pedras, cristais) espalhados fora da trilha,
-## e os elementos dos trechos da trilha (rampas, pedregulhos, placas de boost).
+## e as malhas dos elementos da trilha (rampas, pedras, óleo, serras...), que são criados
+## pela fábrica (scripts/obstacles/) conforme data/trechos.json.
 ## Posição: grade de 6 m com um ponto sorteado em cada célula ("jittered grid", uma forma barata
 ## de ruído azul: nada amontoado e nada em fileira). Desenho: um MultiMesh por tipo e por chunk,
 ## então centenas de objetos custam poucas chamadas de desenho no celular.
@@ -60,72 +61,25 @@ static func plan(terrain: Terrain, chunk: Vector2i, seed_value: int) -> Dictiona
 			per_kind[kind].append(xf)
 			if COLLIDER[kind] > 0.0:
 				colliders.append(["cyl", xf.origin + Vector3.UP * 1.5 * size, COLLIDER[kind] * size, 3.0 * size])
-	_track_features(terrain, chunk, seed_value, per_kind, colliders)
-	return {"kinds": per_kind, "colliders": colliders}
+	return {"kinds": per_kind, "colliders": colliders, "obstacles": _track_features(terrain, chunk)}
 
 
-const BOULDER_RADIUS := 1.0
-
-
-## Pedregulhos de um trecho de PEDRAS: {"lane": deslocamento da faixa livre,
-## "boulders": [[posição, tamanho, giro], ...]}. Determinístico (mesma semente do trecho),
-## usado pelo cenário, pelo piloto automático e pelo bônus de "passou raspando".
-static func boulder_layout(terrain: Terrain, s: int, seed_value: int) -> Dictionary:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = hash(Vector2i(s, seed_value))
-	var sz := s * Track.SEGMENT
-	var lane := rng.randi_range(-1, 1) * 3.0
-	var list := []
-	for k in rng.randi_range(3, 5):
-		var z := sz + rng.randf_range(10.0, 30.0)
-		var off := rng.randf_range(-4.5, 4.5)
-		var size := rng.randf_range(0.8, 1.2)
-		var yaw := rng.randf() * TAU
-		if absf(off - lane) < 2.4:
-			continue
-		var x := terrain.path_x(z) + off
-		list.append([Vector3(x, terrain.height(x, z) - 0.2, z), size, yaw])
-	return {"lane": lane, "boulders": list}
-
-
-## Rampas, pedregulhos e placas de boost dos trechos da trilha que passam por este chunk.
+## Elementos dos trechos da trilha (rampas, pedras, óleo, serras...) que caem neste chunk:
+## [[tipo, Transform3D, params], ...]. Os nós são criados depois, em apply(), pela fábrica.
 ## Cada trecho usa sua própria semente, então um elemento na divisa entre dois chunks é
 ## calculado igual nos dois e só entra no chunk onde fica o seu centro.
-static func _track_features(terrain: Terrain, chunk: Vector2i, seed_value: int, per_kind: Dictionary, colliders: Array) -> void:
+static func _track_features(terrain: Terrain, chunk: Vector2i) -> Array:
 	var x0 := chunk.x * Terrain.CHUNK
 	var z0 := chunk.y * Terrain.CHUNK
-	var items := []  # [tipo, Transform3D, colisor ou null]
+	var out := []
 	for s in range(floori(z0 / Track.SEGMENT), floori((z0 + Terrain.CHUNK) / Track.SEGMENT) + 1):
 		if s < 0:
 			continue
-		var sz := s * Track.SEGMENT
-		var rng := RandomNumberGenerator.new()
-		rng.seed = hash(Vector2i(s, seed_value))
-		match terrain.track.kind_of(s):
-			Track.RAMPA:  # rampa opcional de um lado da trilha, inclinada 14°
-				var z := sz + Track.RAMP_AT
-				var x := terrain.path_x(z) + (2.0 if rng.randf() < 0.5 else -2.0)
-				var xf := Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-14.0)), Vector3(x, terrain.height(x, z) + 0.75, z))
-				items.append(["ramp", xf, ["box", xf, Vector3(3.0, 0.3, 6.2)]])
-			Track.PEDRAS:  # pedregulhos na trilha, sempre deixando uma faixa livre
-				for b: Array in boulder_layout(terrain, s, seed_value).boulders:
-					var size: float = b[1]
-					var xf := Transform3D(Basis(Vector3.UP, b[2]).scaled(Vector3.ONE * size), b[0])
-					items.append(["boulder", xf, ["cyl", xf.origin + Vector3.UP * 0.9 * size, BOULDER_RADIUS * size, 2.4 * size]])
-			Track.BOOST:  # placa de boost no centro da trilha, alinhada com ela
-				var z := sz + Track.BOOST_AT
-				var x := terrain.path_x(z)
-				var yaw := atan2(terrain.path_x(z + 1.0) - terrain.path_x(z - 1.0), 2.0)
-				items.append(["boost_pad", Transform3D(Basis(Vector3.UP, yaw), Vector3(x, terrain.height(x, z) + 0.05, z)), null])
-	for item: Array in items:
-		var origin: Vector3 = item[1].origin
-		if origin.x < x0 or origin.x >= x0 + Terrain.CHUNK or origin.z < z0 or origin.z >= z0 + Terrain.CHUNK:
-			continue
-		if not per_kind.has(item[0]):
-			per_kind[item[0]] = []
-		per_kind[item[0]].append(item[1])
-		if item[2] != null:
-			colliders.append(item[2])
+		for item: Dictionary in terrain.track.placements(terrain, s).itens:
+			var origin: Vector3 = item.xf.origin
+			if origin.x >= x0 and origin.x < x0 + Terrain.CHUNK and origin.z >= z0 and origin.z < z0 + Terrain.CHUNK:
+				out.append([item.tipo, item.xf, item.params])
+	return out
 
 
 ## Cria os nós do plano como filhos de `body` (o corpo estático do chunk). Thread principal.
@@ -150,13 +104,18 @@ static func apply(body: StaticBody3D, plan_data: Dictionary) -> void:
 		var list: Array = per_kind[kind]
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.mesh = _mesh(kind)
+		mm.mesh = mesh(kind)
 		mm.instance_count = list.size()
 		for i in list.size():
 			mm.set_instance_transform(i, list[i])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
 		body.add_child(mmi)
+
+	for o: Array in plan_data.obstacles:
+		var node := ObstacleFactory.create(o[0], o[1], o[2])
+		if node != null:
+			body.add_child(node)
 
 
 static func _pick_kind(kinds: Dictionary, roll: float) -> String:
@@ -170,7 +129,7 @@ static func _pick_kind(kinds: Dictionary, roll: float) -> String:
 	return last
 
 
-static func _mesh(kind: String) -> Mesh:
+static func mesh(kind: String) -> Mesh:
 	if not _meshes.has(kind):
 		_meshes[kind] = _build(kind)
 	return _meshes[kind]
@@ -181,6 +140,7 @@ static func _build(kind: String) -> Mesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var glow := Color.BLACK
+	var rough := 0.85
 	match kind:
 		"tree":
 			_part(st, _cyl(0.18, 0.22, 1.6, 6), Vector3(0, 0.8, 0), Vector3.ONE, Color("6b4a2a"))
@@ -234,17 +194,50 @@ static func _build(kind: String) -> Mesh:
 				_part(st, _box(Vector3(1.3, 0.04, 0.25)), Vector3(-0.45, 0.05, zc), Vector3.ONE, Color("6ff0ff"), Vector3(0, 0.7, 0))
 				_part(st, _box(Vector3(1.3, 0.04, 0.25)), Vector3(0.45, 0.05, zc), Vector3.ONE, Color("6ff0ff"), Vector3(0, -0.7, 0))
 			glow = Color("30c8ff")
-	var mesh := st.commit()
+		"oil":  # mancha escura e brilhante, rente ao chão (o nó escala x e z)
+			_part(st, _cyl(1.9, 1.9, 0.04, 16), Vector3.ZERO, Vector3.ONE, Color("17121f"))
+			_part(st, _cyl(1.0, 1.0, 0.05, 12), Vector3(0.9, 0.005, 0.7), Vector3.ONE, Color("251a38"))
+			_part(st, _cyl(0.8, 0.8, 0.05, 10), Vector3(-1.0, 0.005, -0.6), Vector3.ONE, Color("1d2a3a"))
+			rough = 0.08
+		"saw":  # disco de pé virado para +Z (eixo em z), dentes e raios coloridos para ver girar
+			var face := Vector3(PI / 2.0, 0, 0)
+			_part(st, _cyl(1.3, 1.3, 0.3, 24), Vector3.ZERO, Vector3.ONE, Color("b8bec8"), face)
+			for k in 14:
+				var a := k * TAU / 14.0
+				_part(st, _box(Vector3(0.32, 0.32, 0.24)), Vector3(cos(a), sin(a), 0) * 1.32, Vector3.ONE, Color("7d838c"), Vector3(0, 0, a + PI / 4.0))
+			for k in 2:
+				_part(st, _box(Vector3(2.1, 0.16, 0.34)), Vector3.ZERO, Vector3.ONE, Color("f28a30"), Vector3(0, 0, k * PI / 2.0))
+			_part(st, _cyl(0.35, 0.35, 0.42, 12), Vector3.ZERO, Vector3.ONE, Color("d23c3c"), face)
+		"saw_rail":  # trilho listrado atravessando a trilha, com batentes nas pontas
+			_part(st, _box(Vector3(11.4, 0.06, 0.6)), Vector3(0, 0.03, 0), Vector3.ONE, Color("2a2a2e"))
+			for k in 11:
+				_part(st, _box(Vector3(0.5, 0.07, 0.62)), Vector3(-5.0 + k, 0.035, 0), Vector3.ONE, Color("f2c230"))
+			for side in [-1.0, 1.0]:
+				_part(st, _box(Vector3(0.3, 0.6, 0.7)), Vector3(side * 5.85, 0.3, 0), Vector3.ONE, Color("c0392b"))
+		"hammer_frame":  # pórtico: dois postes e a viga listrada (eixo do martelo a 6,6 m)
+			for side in [-1.0, 1.0]:
+				_part(st, _cyl(0.28, 0.34, 7.0, 8), Vector3(side * 6.2, 3.5, 0), Vector3.ONE, Color("5a5f6a"))
+				_part(st, _box(Vector3(1.0, 0.3, 1.0)), Vector3(side * 6.2, 0.15, 0), Vector3.ONE, Color("3a3d44"))
+			_part(st, _box(Vector3(12.8, 0.5, 0.6)), Vector3(0, 6.85, 0), Vector3.ONE, Color("f2c230"))
+			for k in 8:
+				_part(st, _box(Vector3(0.5, 0.52, 0.62)), Vector3(-5.6 + k * 1.6, 6.85, 0), Vector3.ONE, Color("26262a"))
+		"hammer_arm":  # braço e cabeça do martelo; a origem é o eixo, a cabeça fica 5 m abaixo
+			_part(st, _cyl(0.22, 0.22, 0.8, 10), Vector3.ZERO, Vector3.ONE, Color("333338"), Vector3(PI / 2.0, 0, 0))
+			_part(st, _box(Vector3(0.25, 5.0, 0.25)), Vector3(0, -2.5, 0), Vector3.ONE, Color("777d88"))
+			_part(st, _box(Vector3(2.2, 1.4, 1.4)), Vector3(0, -5.0, 0), Vector3.ONE, Color("c0392b"))
+			for side in [-1.0, 1.0]:
+				_part(st, _box(Vector3(0.3, 1.42, 1.42)), Vector3(side * 0.6, -5.0, 0), Vector3.ONE, Color("f2c230"))
+	var result := st.commit()
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
 	mat.vertex_color_is_srgb = true
-	mat.roughness = 0.85
+	mat.roughness = rough
 	if glow != Color.BLACK:
 		mat.emission_enabled = true
 		mat.emission = glow
 		mat.emission_energy_multiplier = 0.8
-	mesh.surface_set_material(0, mat)
-	return mesh
+	result.surface_set_material(0, mat)
+	return result
 
 
 ## Copia uma forma primitiva para a malha, com posição, escala, rotação e cor.

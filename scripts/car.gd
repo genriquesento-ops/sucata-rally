@@ -15,6 +15,7 @@ const BOOST_SECONDS := 1.5
 
 var _wheels: Array[VehicleWheel3D] = []
 var _boost_time := 0.0
+var _slip_time := 0.0  # óleo
 var _dust: CPUParticles3D
 var _boost_flame: CPUParticles3D
 var _rocket_flame: CPUParticles3D  # só no Foguete
@@ -22,6 +23,7 @@ var _rocket_flame: CPUParticles3D  # só no Foguete
 
 func setup(tier: int, car_stats: Dictionary, paint := 0) -> void:
 	stats = car_stats
+	collision_layer = 1 | Obstacle.CAR_LAYER  # camada 2: só o carro (as áreas de óleo/boost olham para ela)
 	var t: Dictionary = GameData.TIERS[tier]
 	var size: Vector3 = t.size
 	mass = t.mass
@@ -102,6 +104,12 @@ func is_boosting() -> bool:
 	return _boost_time > 0.0
 
 
+## Óleo: aderência bem baixa por alguns segundos e um giro para o lado `side` (±1).
+func slip(seconds: float, side: float) -> void:
+	_slip_time = maxf(_slip_time, seconds)
+	apply_torque_impulse(global_basis.y * side * mass * 1.2)
+
+
 func _physics_process(delta: float) -> void:
 	var speed := forward_speed()
 	var force: float = stats.engine_force
@@ -127,8 +135,12 @@ func _physics_process(delta: float) -> void:
 	var max_steer := lerpf(0.6, 0.2, clampf(absf(speed) / 30.0, 0.0, 1.0))
 	steering = move_toward(steering, steer_input * max_steer, delta * 6.0)
 
+	var oil := 1.0
+	if _slip_time > 0.0:
+		_slip_time -= delta
+		oil = 0.3
 	for w in _wheels:
-		w.wheel_friction_slip = stats.friction * grip * (1.0 if w.use_as_steering else REAR_GRIP)
+		w.wheel_friction_slip = stats.friction * grip * oil * (1.0 if w.use_as_steering else REAR_GRIP)
 
 	var grounded := on_ground()
 	_dust.emitting = grounded and absf(speed) > 4.0

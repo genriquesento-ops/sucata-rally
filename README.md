@@ -8,7 +8,8 @@ Jogo de corrida 3D com física para Android, feito em **Godot 4.7** (GDScript). 
 - **Regiões:** a cada 700 m o mapa muda de região, em ciclo: Campo → Deserto → Neve → Vulcão → Lua. Cada região tem céu, cor e aderência próprios, e a Lua tem gravidade baixa.
 - **Fim da corrida:** acaba o combustível, o carro capota, ou você fica 15 s sem avançar. Galões aparecem na trilha, cada vez mais espaçados.
 - **Peças:** Motor, Pneus, Suspensão, Tanque, Ímã de moedas e Nitro (boost mais forte; pouso perfeito dá mini-boost).
-- **Manobras:** moedas extras por tempo no ar, pouso perfeito e passar raspando por pedras. Manobras encadeadas em até 3 s multiplicam (combo x2, x3…).
+- **Armadilhas:** a partir de 300 m aparecem poças de óleo (o carro desliza), serras que rolam de um lado para o outro e martelos pêndulo. Passar por elas sem bater vale moedas.
+- **Manobras:** moedas extras por tempo no ar, pouso perfeito, passar raspando por pedras e desviar das armadilhas. Manobras encadeadas em até 3 s multiplicam (combo x2, x3…).
 - **Missões:** 3 ativas, cada uma cumprida numa única corrida ("dê 3 saltos", "chegue à Neve"…). Ao completar, paga moedas e é trocada por uma mais difícil.
 - **Visual e som:** um modelo de carro por estágio, 8 pinturas na garagem, sons e música gerados por código, dicas na primeira corrida e opções de qualidade para celulares fracos.
 - **Mapa do dia:** mesma semente para todos no mesmo dia, com recorde próprio do dia.
@@ -33,8 +34,11 @@ scripts/
                  crateras (Lua); distorção de domínio, umidade e cor de rocha nas encostas
   props.gd       árvores, cactos, pinheiros, pedras e cristais (grade com sorteio + MultiMesh),
                  e rampas, pedregulhos e placas de boost da trilha
-  track.gd       trechos de 40 m da trilha (reta, lombadas, salto, rampa, pedras, boost)
-                 escolhidos com Wave Function Collapse em 1D: regras de quem vem depois de quem
+  track.gd       trechos de 40 m da trilha, lidos de data/trechos.json e escolhidos com
+                 Wave Function Collapse em 1D: regras de quem vem depois de quem
+  obstacles/     fábrica de obstáculos (factory.gd) e um script por tipo: rampa, pedregulho,
+                 boost, óleo, serra rolante e martelo pêndulo
+data/trechos.json  os tipos de trecho (relevo, objetos, moedas); guia em docs/trechos.md
   missions.gd    missões (3 ativas, metas crescem a cada missão concluída)
   sound.gd       sons e música sintetizados por código (autoload "Sfx"), sem arquivos de áudio
   settings_panel.gd  opções: sensibilidade, volumes, vibração, qualidade gráfica, zerar progresso

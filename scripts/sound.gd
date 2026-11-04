@@ -24,6 +24,8 @@ func _ready() -> void:
 	_sfx.boost = _wav(_noise(0.7, 0.5, true))
 	_sfx.crash = _wav(_noise(0.35, 0.7, false))
 	_sfx.land = _wav(_sweep(110.0, 45.0, 0.2, 0.8))
+	_sfx.slip = _wav(_wobble(0.5, 0.35))
+	_sfx.clang = _wav(_bell([523.0, 1410.0, 2270.0], 0.6, 0.45))
 	for i in POOL:
 		var p := AudioStreamPlayer.new()
 		p.bus = "SFX"
@@ -136,6 +138,32 @@ static func _noise(seconds: float, volume: float, rising: bool) -> PackedFloat32
 		lp += (randf_range(-1.0, 1.0) - lp) * cutoff
 		var env := sin(PI * u) if rising else (1.0 - u) * (1.0 - u)
 		out.append(lp * env * volume * 2.0)
+	return out
+
+
+## Derrapada no óleo: tom que desce ondulando ("uiuiuiu").
+static func _wobble(seconds: float, volume: float) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	var count := int(seconds * RATE)
+	var phase := 0.0
+	for i in count:
+		var u := float(i) / count
+		var t := float(i) / RATE
+		phase += TAU * (lerpf(900.0, 350.0, u) + sin(TAU * 14.0 * t) * 120.0) / RATE
+		out.append(sin(phase) * (1.0 - u) * volume)
+	return out
+
+
+## Pancada metálica: parciais fora da série harmônica (som de sino/chapa) decaindo rápido.
+static func _bell(partials: Array, seconds: float, volume: float) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	var count := int(seconds * RATE)
+	for i in count:
+		var t := float(i) / RATE
+		var s := 0.0
+		for k in partials.size():
+			s += sin(TAU * partials[k] * t) * exp(-t * (6.0 + k * 4.0)) / (k + 1)
+		out.append(s * volume)
 	return out
 
 

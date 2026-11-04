@@ -1,0 +1,90 @@
+{
+  "_leia": "Trechos da trilha (40 m cada). Os campos estão explicados em docs/trechos.md.",
+  "largada": "reta",
+  "trechos": [
+    {
+      "id": "reta",
+      "peso": [3.0, -1.5],
+      "depois": ["reta", "lombadas", "salto", "rampa", "pedras", "boost", "oleo", "serras", "martelo"]
+    },
+    {
+      "id": "lombadas",
+      "peso": [1.0, 0.0],
+      "depois": ["reta", "pedras", "boost", "oleo"],
+      "altura": {"onda": {"de": 5, "ate": 35, "periodo": 6, "amplitude": 0.5}}
+    },
+    {
+      "id": "salto",
+      "peso": [0.6, 1.2],
+      "depois": ["reta"],
+      "moedas": false,
+      "dica": "jump",
+      "altura": {"pontos": [[4, 0], [14, 2.4, "acelera"], [16, -1.5], [22, -1.5], [26, 1.8, "suave"], [40, 0, "suave"]]},
+      "faixa_aviso": [11, 15],
+      "arcos": [{"x": 0, "de": 14, "ate": 30, "altura": 2.8}]
+    },
+    {
+      "id": "rampa",
+      "peso": [0.8, 0.0],
+      "depois": ["reta", "lombadas"],
+      "moedas": false,
+      "dica": "jump",
+      "objetos": [
+        {"tipo": "rampa", "z": 16, "x_escolha": [-2, 2], "inclinacao": -14, "altura_extra": 0.75,
+         "arco": {"de": 4, "ate": 18, "altura": 3.2}}
+      ]
+    },
+    {
+      "id": "pedras",
+      "peso": [0.4, 1.6],
+      "depois": ["reta", "lombadas", "boost"],
+      "moedas": false,
+      "dica": "rocks",
+      "objetos": [
+        {"tipo": "pedregulho", "quantidade": [3, 5], "z": [10, 30], "x": [-4.5, 4.5], "escala": [0.8, 1.2],
+         "girar": true, "altura_extra": -0.2, "faixa_livre": {"faixas": [-3, 0, 3], "folga": 2.4}}
+      ]
+    },
+    {
+      "id": "boost",
+      "peso": [0.7, 0.0],
+      "depois": ["salto", "rampa"],
+      "dica": "boost",
+      "objetos": [
+        {"tipo": "boost", "z": 20, "x": 0, "alinhar": true, "altura_extra": 0.05}
+      ]
+    },
+    {
+      "id": "oleo",
+      "peso": [0.5, 0.8],
+      "desde": 300,
+      "depois": ["reta", "lombadas", "pedras"],
+      "dica": "oil",
+      "objetos": [
+        {"tipo": "oleo", "quantidade": [2, 3], "z": [8, 32], "x": [-3.5, 3.5], "escala": [0.8, 1.2],
+         "girar": true, "altura_extra": 0.03, "faixa_livre": {"faixas": [-3, 0, 3], "folga": 2.6}}
+      ]
+    },
+    {
+      "id": "serras",
+      "peso": [0.5, 0.6],
+      "desde": 500,
+      "depois": ["reta"],
+      "dica": "saw",
+      "objetos": [
+        {"tipo": "serra", "z": 12, "x": 0, "alinhar": true, "params": {"amplitude": 4.2, "periodo": [2.6, 3.4]}},
+        {"tipo": "serra", "z": 28, "x": 0, "alinhar": true, "chance": 0.5, "params": {"amplitude": 4.2, "periodo": [2.6, 3.4]}}
+      ]
+    },
+    {
+      "id": "martelo",
+      "peso": [0.4, 0.6],
+      "desde": 700,
+      "depois": ["reta", "boost"],
+      "dica": "hammer",
+      "objetos": [
+        {"tipo": "martelo", "z": 20, "x": 0, "alinhar": true, "params": {"angulo": 60, "periodo": [2.2, 3.0]}}
+      ]
+    }
+  ]
+}

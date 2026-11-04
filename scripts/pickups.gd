@@ -64,10 +64,10 @@ func _spawn_segment(z0: float) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed + int(z0)
 	# fileira de moedas na trilha; valem mais quanto mais longe.
-	# Não vai em trechos com salto, rampa ou pedras (lá as moedas ficam nos arcos).
+	# Não vai em trechos com "moedas": false no trechos.json (salto, rampa, pedras: lá as
+	# moedas ficam nos arcos).
 	var track := _terrain.track
-	var busy := [Track.SALTO, Track.RAMPA, Track.PEDRAS]
-	var clear: bool = not busy.has(track.kind_at(z0 + 2.0)) and not busy.has(track.kind_at(z0 + 20.0))
+	var clear: bool = track.segment_at(z0 + 2.0).get("moedas", true) and track.segment_at(z0 + 20.0).get("moedas", true)
 	if rng.randf() < 0.8 and clear:
 		var count := rng.randi_range(4, 8)
 		var side := rng.randf_range(-3.0, 3.0)
@@ -84,18 +84,20 @@ func _spawn_segment(z0: float) -> void:
 		_next_fuel += 140.0 + _next_fuel * 0.4
 
 
-## Arco de moedas no ar: sobre o vale do salto, ou depois da rampa (do mesmo lado dela).
+## Arcos de moedas no ar, como manda o trechos.json: "arcos" do trecho (ex.: sobre o vale
+## do salto) e "arco" de um objeto (ex.: depois da rampa, do mesmo lado dela).
 func _spawn_arcs(index: int) -> void:
+	var track := _terrain.track
 	var sz := index * Track.SEGMENT
 	var value := 2 * (1 + int(sz / 300.0))
-	match _terrain.track.kind_of(index):
-		Track.SALTO:
-			_arc(_terrain.path_x(sz + 14.0), sz + 14.0, sz + 30.0, 2.8, value)
-		Track.RAMPA:
-			var rng := RandomNumberGenerator.new()
-			rng.seed = hash(Vector2i(index, _seed))  # mesma semente das Props: mesmo lado da rampa
-			var x := _terrain.path_x(sz + Track.RAMP_AT) + (2.0 if rng.randf() < 0.5 else -2.0)
-			_arc(x, sz + Track.RAMP_AT + 4.0, sz + Track.RAMP_AT + 18.0, 3.2, value)
+	for a: Dictionary in track.segment_of(index).get("arcos", []):
+		_arc(_terrain.path_x(sz + a.de) + a.get("x", 0.0), sz + a.de, sz + a.ate, a.altura, value)
+	if not track.segment_of(index).has("objetos"):
+		return
+	for item: Dictionary in track.placements(_terrain, index).itens:
+		var a: Dictionary = item.arco
+		if not a.is_empty():
+			_arc(item.xf.origin.x, item.z + a.de, item.z + a.ate, a.altura, value)
 
 
 func _arc(x: float, z_from: float, z_to: float, peak: float, value: int) -> void:

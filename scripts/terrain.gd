@@ -285,9 +285,10 @@ func _chunk_data(c: Vector2i) -> Dictionary:
 	for j in n:
 		var z := z0 + j * step
 		var road_color := GameData.biome_color(z, "road")
-		# faixa amarela de aviso na borda do salto
+		# faixa amarela de aviso (ex.: na borda do salto), pelo "faixa_aviso" do trecho
+		var warn: Array = track.segment_at(z).get("faixa_aviso", [])
 		var t := fposmod(z, Track.SEGMENT)
-		if track.kind_at(z) == Track.SALTO and t >= 11.0 and t <= 15.0:
+		if not warn.is_empty() and t >= warn[0] and t <= warn[1]:
 			road_color = Color("f2c230")
 		var palette := [GameData.biome_color(z, "ground"), GameData.biome_color(z, "ground2"),
 			GameData.biome_color(z, "rock"), road_color]
