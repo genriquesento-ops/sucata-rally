@@ -11,6 +11,8 @@ var daily_date := ""  # "AAAA-MM-DD" do mapa do dia
 var daily_best := 0  # recorde no mapa do dia de daily_date
 var paint := 0  # índice em CarModel.PAINTS (0 = cor original do estágio)
 var tips_seen: Array = []  # dicas da primeira vez já mostradas
+var totals := {}  # números somados de todas as corridas (ver achievements.gd)
+var achievements_done: Array = []  # ids das conquistas já pagas
 const DEFAULT_SETTINGS := {"steer": 1.0, "music": 0.6, "sfx": 0.8, "vibration": true, "quality": 1}
 var settings := DEFAULT_SETTINGS.duplicate()  # quality: 1 = alta, 0 = baixa
 
@@ -36,6 +38,8 @@ func _ready() -> void:
 	daily_best = cfg.get_value("daily", "best", 0)
 	paint = cfg.get_value("progress", "paint", 0)
 	tips_seen = cfg.get_value("tips", "seen", [])
+	totals = cfg.get_value("stats", "totals", {})
+	achievements_done = cfg.get_value("stats", "achievements", [])
 	for key in DEFAULT_SETTINGS:
 		settings[key] = cfg.get_value("settings", key, DEFAULT_SETTINGS[key])
 	Missions.ensure()
@@ -54,6 +58,8 @@ func persist() -> void:
 	cfg.set_value("daily", "best", daily_best)
 	cfg.set_value("progress", "paint", paint)
 	cfg.set_value("tips", "seen", tips_seen)
+	cfg.set_value("stats", "totals", totals)
+	cfg.set_value("stats", "achievements", achievements_done)
 	for key in settings:
 		cfg.set_value("settings", key, settings[key])
 	cfg.save(_path)
@@ -68,7 +74,8 @@ func first_time(tip: String) -> bool:
 	return true
 
 
-## Zera o progresso (moedas, peças, estágio, recordes, missões, dicas); mantém as configurações.
+## Zera o progresso (moedas, peças, estágio, recordes, missões, dicas, conquistas);
+## mantém as configurações.
 func reset_progress() -> void:
 	coins = 0
 	best = 0
@@ -81,6 +88,8 @@ func reset_progress() -> void:
 	daily_date = ""
 	daily_best = 0
 	tips_seen = []
+	totals = {}
+	achievements_done = []
 	Missions.ensure()
 
 

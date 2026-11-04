@@ -63,6 +63,8 @@ var _trick_coins := 0
 var _counts := {"jumps": 0, "perfect": 0, "near": 0, "boosts": 0, "dodges": 0, "hammers": 0, "hits": 0, "slips": 0}
 var _layouts := {}  # trecho -> posições dos objetos (cache, para o piloto automático)
 
+var _beep_time := 0.0  # bipe do tanque baixo
+
 # impacto
 var _shake := 0.0
 var _prev_speed := 0.0
@@ -156,6 +158,22 @@ func _physics_process(delta: float) -> void:
 	_follow_camera(delta)
 	var best := Save.daily_best_today() if daily else Save.best
 	_hud.set_values(distance, best, run_coins, fuel / _stats.fuel)
+	if running:
+		_warn_fuel(pos.z, delta)
+
+
+## Tanque abaixo de 25%: aviso piscando com a distância até o próximo galão e um bipe.
+func _warn_fuel(z: float, delta: float) -> void:
+	var ratio: float = fuel / _stats.fuel
+	if ratio >= 0.25 or fuel <= 0.0:
+		_hud.set_fuel_warning("")
+		return
+	var next := _pickups.next_fuel_distance(z)
+	_hud.set_fuel_warning("TANQUE BAIXO · galão em %d m" % int(next) if next >= 0.0 else "TANQUE BAIXO")
+	_beep_time -= delta
+	if _beep_time <= 0.0:
+		_beep_time = 1.0 if ratio < 0.12 else 2.0
+		Sfx.play("warn", 0.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -250,6 +268,12 @@ func _check_tips(pos: Vector3) -> void:
 		_hud.tip("pegue os galões vermelhos: quando o combustível acaba, a corrida termina.")
 
 
+## Conta armadilhas por tipo para as estatísticas ("t_serra", "t_oleo"...).
+func _count_trap(tipo: String) -> void:
+	if not tipo.is_empty():
+		_counts["t_" + tipo] = _counts.get("t_" + tipo, 0) + 1
+
+
 ## Eventos dos obstáculos da trilha (scripts/obstacles/).
 func on_obstacle(event: String, data := {}) -> void:
 	if not _end_reason.is_empty():
@@ -267,23 +291,27 @@ func on_obstacle(event: String, data := {}) -> void:
 			_counts.dodges += 1
 			if data.get("tipo", "") == "martelo":
 				_counts.hammers += 1
+			_count_trap(data.get("tipo", ""))
 			_trick(data.text, data.coins)
 			Effects.sparkle(self, _car.global_position + Vector3.UP, UiKit.GOLD)
 			_hud.flash(Color(1.0, 0.85, 0.2, 0.18))
 		"oil":
 			_counts.slips += 1
+			_count_trap("oleo")
 			_hud.toast("ÓLEO!")
 			_hud.flash(Color(0.3, 0.1, 0.5, 0.25))
 			Sfx.play("slip")
 			_vibrate(60)
 		"ice":
 			_counts.slips += 1
+			_count_trap("gelo")
 			_hud.toast("GELO!")
 			_hud.flash(Color(0.7, 0.9, 1.0, 0.3))
 			Sfx.play("slip", 0.15)
 			_vibrate(40)
 		"lava":
 			_counts.slips += 1
+			_count_trap("lava")
 			fuel = maxf(0.0, fuel - _stats.fuel * float(data.get("fuel", 0.15)))
 			_hud.toast("QUEIMOU! −combustível")
 			_hud.flash(Color(1.0, 0.25, 0.0, 0.45))
@@ -405,6 +433,17 @@ func _finish(reason: String) -> void:
 	var done := Missions.complete_from_run(stats)
 	for m in done:
 		lines.append("Missão concluída: %s  +%d" % [m.text, m.reward])
+	# totais de todas as corridas e conquistas
+	stats["earned"] = earned
+	stats["runs"] = 1
+	stats["best"] = dist
+	stats["region"] = mini(int(distance / GameData.BIOME_LENGTH), GameData.BIOMES.size() - 1)
+	for r in stats.region + 1:
+		stats["r_%d" % r] = 1
+	var unlocked := Achievements.record_run(stats)
+	for a in unlocked:
+		lines.append("CONQUISTA: %s  +%d" % [a.text, a.reward])
+	done.append_array(unlocked)
 	Sfx.play("mission" if not done.is_empty() or record else "click")
 	Save.persist()
 	Platform.on_run_finished(dist, earned)

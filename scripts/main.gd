@@ -144,6 +144,16 @@ func _ui_tour() -> void:
 	(_current as Garage)._open_settings()
 	await _wait(0.5)
 	await _shot("ui-3-opcoes")
+	# conquistas com números de exemplo (é o save do demo, apagado na próxima vez)
+	Achievements.record_run({"distance": 12400, "runs": 23, "earned": 3100, "jumps": 64, "perfect": 27,
+		"near": 18, "boosts": 31, "dodges": 22, "hammers": 6, "hits": 9, "t_serra": 9, "t_martelo": 6,
+		"t_barril": 7, "t_oleo": 12, "t_gelo": 4, "t_lava": 2, "best": 1840, "region": 3,
+		"r_0": 23, "r_1": 15, "r_2": 6, "r_3": 2})
+	show_garage()
+	await _wait(0.5)
+	(_current as Garage)._open_achievements()
+	await _wait(0.5)
+	await _shot("ui-3b-conquistas")
 	for tier in GameData.TIERS.size():
 		Save.tier = tier
 		Save.paint = [0, 2, 4, 6, 1][tier]
@@ -157,6 +167,8 @@ func _ui_tour() -> void:
 	await _shot("ui-5-dica-corrida")
 	run.auto_drive = true
 	await _wait(12.0)
+	run.fuel = run._stats.fuel * 0.1  # mostra o aviso de tanque baixo
+	await _wait(0.5)
 	await _shot("ui-6-corrida")
 	get_tree().quit()
 

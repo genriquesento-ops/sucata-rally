@@ -20,6 +20,8 @@ var _tip_time := 0.0
 var _trick: Label  # aviso de manobra ("+12  SALTO 1,4 s  x2")
 var _trick_time := 0.0
 var _best_label := "Recorde"
+var _fuel_warn: Label  # "TANQUE BAIXO", piscando, embaixo da barra
+var _blink := 0.0
 var _flash: ColorRect  # pisca a tela inteira (batida, óleo, desvio)
 var _flash_tween: Tween
 
@@ -46,6 +48,10 @@ func _ready() -> void:
 	fuel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_place(root, fuel_label, Control.PRESET_CENTER_TOP, Rect2(-200, 24, 400, 26))
 
+	_fuel_warn = UiKit.label("", 22, Color("ff6a5a"))
+	_fuel_warn.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_place(root, _fuel_warn, Control.PRESET_CENTER_TOP, Rect2(-300, 54, 600, 32))
+
 	_toast = UiKit.label("", 56)
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_place(root, _toast, Control.PRESET_CENTER_TOP, Rect2(-400, 140, 800, 80))
@@ -57,7 +63,7 @@ func _ready() -> void:
 	_tip = PanelContainer.new()
 	_tip.add_theme_stylebox_override("panel", UiKit.box(Color(0.1, 0.1, 0.16, 0.8), 12))
 	_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_place(root, _tip, Control.PRESET_CENTER_TOP, Rect2(-380, 64, 760, 0))
+	_place(root, _tip, Control.PRESET_CENTER_TOP, Rect2(-380, 90, 760, 0))  # abaixo do aviso de tanque
 	_tip_label = UiKit.label("", 22)
 	_tip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_tip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -115,6 +121,11 @@ func trick(text: String, coins: int, combo: int) -> void:
 	create_tween().tween_property(_trick, "scale", Vector2.ONE, 0.2)
 
 
+## Aviso de tanque baixo (texto vazio esconde).
+func set_fuel_warning(text: String) -> void:
+	_fuel_warn.text = text
+
+
 ## Pisca a tela com uma cor que some em `seconds`.
 func flash(color: Color, seconds := 0.35) -> void:
 	if _flash_tween != null:
@@ -136,6 +147,8 @@ func show_end(reason: String, distance: int, record: bool, earned: int, lines: P
 
 
 func _process(delta: float) -> void:
+	_blink += delta
+	_fuel_warn.modulate.a = 0.45 + 0.55 * absf(sin(_blink * 5.0))
 	_toast_time -= delta
 	_toast.modulate.a = clampf(_toast_time, 0.0, 1.0)
 	_trick_time -= delta

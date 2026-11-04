@@ -62,6 +62,8 @@ D:\Godot\editor\Godot_v4.7.2-stable_win64_console.exe --path D:\sucata-rally -- 
 - `car.gd` (VehicleBody3D, frente = +Z), `car_model.gd` (visual por estágio + pinturas), `car_showcase.gd`.
 - `run.gd`: corrida, manobras/combo, ré automática, boost, dicas, câmera, fim de corrida + missões.
 - `hud.gd`, `steer_control.gd` (direção por arrasto), `garage.gd`, `settings_panel.gd`, `title_screen.gd`, `missions.gd`, `pickups.gd`, `effects.gd`, `ui_kit.gd`.
+- `achievements.gd` (conquistas sobre `Save.totals`, somados no fim de cada corrida; "t_<tipo>" = armadilhas por tipo, "r_<n>" = chegadas à região n) e `achievements_panel.gd` (tela aberta pelo botão "Conquistas" da garagem).
+- Galões em 130, 312, 552, 869, 1287, 1839 m… (`pickups.gd`), sempre na faixa livre do trecho; abaixo de 25% de tanque o HUD avisa a distância até o próximo.
 
 ## Lições aprendidas
 - Renderizador **Compatibility**: tonemap filmic + ambiente do céu deixam tudo pálido → usar tonemap linear e luz ambiente por cor.

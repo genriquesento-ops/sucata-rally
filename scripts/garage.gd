@@ -14,6 +14,7 @@ var _rows: Array[Dictionary] = []  # {part, title, bar, button}
 var _evolve: Button
 var _evolve_hint: Label
 var _showcase: CarShowcase
+var _trophies: Button
 
 
 func _ready() -> void:
@@ -51,6 +52,9 @@ func _build_left() -> Control:
 	var title := UiKit.label("SUCATA RALLY", 34)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
+	_trophies = UiKit.button("", 18, Color("8a6a1a"))
+	_trophies.pressed.connect(_open_achievements)
+	header.add_child(_trophies)
 	var options := UiKit.button("Opções", 18, Color("4a4658"))
 	options.pressed.connect(_open_settings)
 	header.add_child(options)
@@ -182,6 +186,7 @@ func _refresh() -> void:
 		var m: Dictionary = Save.missions[i] if i < Save.missions.size() else {}
 		_missions[i].text = "" if m.is_empty() else "• %s   +%d" % [Missions.text(m), m.reward]
 	_daily.text = "MAPA DO DIA\nhoje: %d m" % Save.daily_best_today()
+	_trophies.text = "Conquistas %d/%d" % [Achievements.count_done(), Achievements.LIST.size()]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -224,6 +229,11 @@ func _open_settings() -> void:
 		_refresh()
 		_showcase.set_car(Save.tier, Save.paint))
 	add_child(panel)
+
+
+func _open_achievements() -> void:
+	Sfx.play("click")
+	add_child(AchievementsPanel.new())
 
 
 ## Dica da primeira visita à garagem (depois da primeira corrida).

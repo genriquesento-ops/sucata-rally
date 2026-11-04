@@ -28,6 +28,7 @@ func _ready() -> void:
 	_sfx.clang = _wav(_bell([523.0, 1410.0, 2270.0], 0.6, 0.45))
 	_sfx.sizzle = _wav(_hiss(0.6, 0.35))
 	_sfx.wind = _wav(_noise(0.9, 0.35, true))
+	_sfx.warn = _wav(_notes([[880.0, 0.07], [660.0, 0.1]], 0.22))
 	for i in POOL:
 		var p := AudioStreamPlayer.new()
 		p.bus = "SFX"

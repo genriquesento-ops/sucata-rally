@@ -79,9 +79,18 @@ func _spawn_segment(z0: float) -> void:
 	while _next_fuel < z0 + SEGMENT:
 		if _next_fuel >= z0:
 			_add(_fuel_mesh, _terrain.path_x(_next_fuel) + _free_lane(_next_fuel), _next_fuel, 0.9, true, 0)
-		# galões em 130, 322, 591, 967, 1494 m...: o vão cresce até passar do alcance do
-		# tanque, e aí a corrida acaba (melhorar o Tanque é o que leva mais longe)
-		_next_fuel += 140.0 + _next_fuel * 0.4
+		# galões em 130, 312, 552, 869, 1287, 1839 m...: o vão cresce até passar do alcance
+		# do tanque, e aí a corrida acaba (melhorar o Tanque é o que leva mais longe)
+		_next_fuel += 140.0 + _next_fuel * 0.32
+
+
+## Distância até o próximo galão à frente do carro (já gerado), ou -1 se não há nenhum à vista.
+func next_fuel_distance(car_z: float) -> float:
+	var best := INF
+	for item in _items:
+		if item.fuel and item.node.position.z > car_z:
+			best = minf(best, item.node.position.z - car_z)
+	return best if best < INF else -1.0
 
 
 ## Deslocamento da faixa livre do trecho em z (0 se não tiver): o galão vai nela, e não
