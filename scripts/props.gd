@@ -194,11 +194,16 @@ static func _build(kind: String) -> Mesh:
 				_part(st, _box(Vector3(1.3, 0.04, 0.25)), Vector3(-0.45, 0.05, zc), Vector3.ONE, Color("6ff0ff"), Vector3(0, 0.7, 0))
 				_part(st, _box(Vector3(1.3, 0.04, 0.25)), Vector3(0.45, 0.05, zc), Vector3.ONE, Color("6ff0ff"), Vector3(0, -0.7, 0))
 			glow = Color("30c8ff")
-		"oil":  # mancha escura e brilhante, rente ao chão (o nó escala x e z)
-			_part(st, _cyl(1.9, 1.9, 0.04, 16), Vector3.ZERO, Vector3.ONE, Color("17121f"))
-			_part(st, _cyl(1.0, 1.0, 0.05, 12), Vector3(0.9, 0.005, 0.7), Vector3.ONE, Color("251a38"))
-			_part(st, _cyl(0.8, 0.8, 0.05, 10), Vector3(-1.0, 0.005, -0.6), Vector3.ONE, Color("1d2a3a"))
-			rough = 0.08
+		"oil":  # mancha escura com borda molhada e manchas "arco-íris" (o nó escala x e z)
+			_part(st, _cyl(2.4, 2.4, 0.03, 20), Vector3(0, -0.01, 0), Vector3.ONE, Color("4a4258"))
+			_part(st, _cyl(2.2, 2.2, 0.04, 20), Vector3.ZERO, Vector3.ONE, Color("120d1a"))
+			# reflexos em faixas compridas e tortas (escala em x/z), não em círculos concêntricos
+			_part(st, _cyl(1.0, 1.0, 0.04, 12), Vector3(0.6, 0.006, 0.4), Vector3(1.4, 1, 0.45), Color("3a2860"), Vector3(0, 0.5, 0))
+			_part(st, _cyl(0.8, 0.8, 0.04, 12), Vector3(-0.7, 0.008, -0.5), Vector3(1.5, 1, 0.35), Color("1e4a55"), Vector3(0, -0.4, 0))
+			_part(st, _cyl(0.6, 0.6, 0.04, 10), Vector3(-0.2, 0.01, 1.1), Vector3(1.6, 1, 0.3), Color("4a2a55"), Vector3(0, 0.2, 0))
+			_part(st, _cyl(0.5, 0.5, 0.04, 10), Vector3(0.9, 0.012, -0.9), Vector3(1.3, 1, 0.3), Color("2a5048"), Vector3(0, 1.1, 0))
+			rough = 0.05
+			glow = Color("241040")
 		"saw":  # disco de pé virado para +Z (eixo em z), dentes e raios coloridos para ver girar
 			var face := Vector3(PI / 2.0, 0, 0)
 			_part(st, _cyl(1.3, 1.3, 0.3, 24), Vector3.ZERO, Vector3.ONE, Color("b8bec8"), face)

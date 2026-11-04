@@ -162,18 +162,28 @@ func placements(terrain: Terrain, index: int) -> Dictionary:
 	var sz := index * SEGMENT
 	var items := []
 	var lane := NAN
+	var hard := Terrain.difficulty(sz + SEGMENT / 2.0)
 	for spec: Dictionary in seg.get("objetos", []):
-		if rng.randf() > float(spec.get("chance", 1.0)):
+		# "longe": como o objeto fica na dificuldade máxima (chance e quantidade viram esse
+		# valor; params são multiplicados), misturado conforme a distância
+		var far: Dictionary = spec.get("longe", {})
+		if rng.randf() > lerpf(spec.get("chance", 1.0), far.get("chance", spec.get("chance", 1.0)), hard):
 			continue
 		var free: Dictionary = spec.get("faixa_livre", {})
 		if not free.is_empty():
 			lane = _choice(free.faixas, rng)
-		for k in _count(spec.get("quantidade", 1), rng):
+		var count := _count(spec.get("quantidade", 1), rng)
+		if far.has("quantidade"):
+			count = roundi(lerpf(count, maxf(count, far.quantidade), hard))
+		for k in count:
 			var z := sz + _num(spec.get("z", SEGMENT / 2.0), rng)
 			var off := _choice(spec.x_escolha, rng) if spec.has("x_escolha") else _num(spec.get("x", 0.0), rng)
 			var size := _num(spec.get("escala", 1.0), rng)
 			var spin := rng.randf() * TAU
 			var params := _resolve(spec.get("params", {}), rng)
+			var mult: Dictionary = far.get("params", {})
+			for key: String in mult:
+				params[key] = params.get(key, 1.0) * lerpf(1.0, mult[key], hard)
 			if not free.is_empty() and absf(off - lane) < float(free.folga):
 				off = _out_of_lane(off, lane, float(free.folga), spec.get("x", [-4.5, 4.5]))
 				if is_nan(off):

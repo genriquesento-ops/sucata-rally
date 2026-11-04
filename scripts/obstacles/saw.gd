@@ -61,4 +61,4 @@ func _on_hit() -> void:
 	away.y = 0.0
 	away = away.normalized() if away.length() > 0.1 else global_basis.x
 	car.apply_central_impulse((away * PUSH + Vector3.UP * 2.0) * car.mass)
-	_emit("hit")
+	_emit("hit", {"pos": _blade.global_position.lerp(car.global_position, 0.5)})

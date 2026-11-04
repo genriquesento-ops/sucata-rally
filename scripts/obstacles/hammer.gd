@@ -64,4 +64,4 @@ func _on_hit() -> void:
 	if going == 0.0:
 		going = 1.0
 	car.apply_central_impulse((global_basis.x * going * PUSH + Vector3.UP * 3.0) * car.mass)
-	_emit("hit")
+	_emit("hit", {"pos": _arm.to_global(Vector3.DOWN * ARM)})

@@ -15,6 +15,10 @@ func _ready() -> void:
 			_demo_dir = arg.trim_prefix("--demo-ui=")
 			_ui_tour()
 			return
+		elif arg.begins_with("--demo-traps="):
+			_demo_dir = arg.trim_prefix("--demo-traps=")
+			_trap_tour()
+			return
 	if _demo_dir.is_empty():
 		var title := TitleScreen.new()
 		title.start.connect(show_garage)
@@ -154,6 +158,34 @@ func _ui_tour() -> void:
 	run.auto_drive = true
 	await _wait(12.0)
 	await _shot("ui-6-corrida")
+	get_tree().quit()
+
+
+## Leva o carro (sem desviar, pelo centro da trilha) até cada armadilha e fotografa a
+## passagem: confere colisão, empurrão, faíscas e o pisca da tela.
+##   godot --path . -- --demo-traps=C:/pasta
+func _trap_tour() -> void:
+	Save.tips_seen.append_array(["steer", "oil", "saw", "hammer", "fuel"])  # sem dicas na frente
+	var run := start_run()
+	run.auto_drive = true  # desvia do óleo, mas atravessa serras e martelos pelo meio
+	await _wait(1.0)
+	for id in ["oleo", "serras", "martelo"]:
+		if not run.teleport_to_segment(id, 2000.0):
+			print("DEMO sem trecho ", id)
+			continue
+		for k in 12:
+			await _wait(0.35)
+			await _shot("trap-%s-%d" % [id, k])
+		print("DEMO %s %s" % [id, run.debug_line()])
+	# reações: pancada (faíscas, pisca laranja, giro) e desvio (brilho dourado)
+	run.on_obstacle("hit", {"pos": run._car.global_position + Vector3(0.8, 0.8, 1.5)})
+	for k in 3:
+		await _wait(0.06)
+		await _shot("trap-reacao-batida-%d" % k)
+	await _wait(1.5)
+	run.on_obstacle("dodge", {"text": "PASSOU DO MARTELO!", "coins": 5})
+	await _wait(0.08)
+	await _shot("trap-reacao-desvio")
 	get_tree().quit()
 
 

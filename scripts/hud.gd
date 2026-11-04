@@ -20,6 +20,8 @@ var _tip_time := 0.0
 var _trick: Label  # aviso de manobra ("+12  SALTO 1,4 s  x2")
 var _trick_time := 0.0
 var _best_label := "Recorde"
+var _flash: ColorRect  # pisca a tela inteira (batida, óleo, desvio)
+var _flash_tween: Tween
 
 
 func _ready() -> void:
@@ -61,6 +63,12 @@ func _ready() -> void:
 	_tip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tip.add_child(_tip_label)
 	_tip.visible = false
+
+	_flash = ColorRect.new()
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash.color = Color(1, 1, 1, 0)
+	root.add_child(_flash)
+	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	_steer = SteerControl.new()
 	root.add_child(_steer)
@@ -105,6 +113,15 @@ func trick(text: String, coins: int, combo: int) -> void:
 	_trick_time = 1.6
 	_trick.scale = Vector2.ONE * 1.35
 	create_tween().tween_property(_trick, "scale", Vector2.ONE, 0.2)
+
+
+## Pisca a tela com uma cor que some em `seconds`.
+func flash(color: Color, seconds := 0.35) -> void:
+	if _flash_tween != null:
+		_flash_tween.kill()
+	_flash.color = color
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(_flash, "color:a", 0.0, seconds)
 
 
 ## lines: linhas extras (manobras, missões concluídas).

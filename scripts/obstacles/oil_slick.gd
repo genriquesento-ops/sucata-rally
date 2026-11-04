@@ -1,7 +1,7 @@
 extends Obstacle
 ## Poça de óleo: passar por cima tira a aderência por um instante e dá uma rodada no carro.
 
-const RADIUS := 1.9
+const RADIUS := 2.2
 const SLIP_SECONDS := 1.4
 
 var _used := false

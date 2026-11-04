@@ -47,6 +47,7 @@ Um número fixo ou `[mín, máx]`, que é sorteado.
 | `faixa_livre` | `{"faixas": [-3, 0, 3], "folga": 2.4}` sorteia uma faixa que fica sempre livre. Os objetos que cairiam nela são empurrados para o lado. |
 | `arco` | arco de moedas depois do objeto: `de`, `ate` (metros a partir dele) e `altura` |
 | `params` | ajustes do próprio obstáculo, por exemplo `serra`: `amplitude`, `periodo`; `martelo`: `angulo`, `periodo` |
+| `longe` | como o objeto fica na dificuldade máxima (bem longe), misturado conforme a distância: `chance` e `quantidade` passam a ser esse valor, e `params` são multiplicados. Ex.: `{"params": {"periodo": 0.6}}` deixa a serra 40% mais rápida lá longe. |
 
 ## Criando um tipo de obstáculo novo (código)
 

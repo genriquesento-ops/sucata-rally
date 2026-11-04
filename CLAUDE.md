@@ -40,7 +40,11 @@ D:\Godot\editor\Godot_v4.7.2-stable_win64_console.exe --path D:\sucata-rally -- 
 # tour das telas (inicial, garagem, opções, 5 carros, dicas):
 ... --path D:\sucata-rally -- --demo-ui=D:/sucata-rally/build/demo
 
-# testes: tests/drive_test.gd (física, --headless), biome_shots.gd, track_shots.gd, look_test.gd, noise_range.gd
+# armadilhas: leva o carro até óleo, serra e martelo e fotografa (+ reações de batida/desvio):
+... --path D:\sucata-rally -- --demo-traps=D:/sucata-rally/build/traps
+
+# testes: tests/drive_test.gd (física, --headless), trap_test.gd (cada armadilha dá o evento certo, --headless),
+#         biome_shots.gd, track_shots.gd, look_test.gd, noise_range.gd
 ... --headless --path D:\sucata-rally --script res://tests/drive_test.gd
 
 # APK (definir antes ANDROID_HOME e GODOT_ANDROID_KEYSTORE_DEBUG_PATH/USER/PASSWORD):
@@ -66,6 +70,7 @@ D:\Godot\editor\Godot_v4.7.2-stable_win64_console.exe --path D:\sucata-rally -- 
 - Não nomear métodos `_set`/`_get` (sobrescrevem os virtuais de Object).
 - Tipos inferidos de valores Variant (`var x := dict[...]`) dão erro de parse: declarar o tipo.
 - Screenshots do demo travam o frame (~140 ms): não confundir com problema de desempenho.
+- Teleportar um RigidBody/VehicleBody em movimento: usar `PhysicsServer3D.body_set_state` (só `global_transform` às vezes é desfeito).
 
 ## Estado atual e próximos passos
 Tudo funcionando no PC (testado por screenshots e logs do demo). **Ainda não testado num celular real.**

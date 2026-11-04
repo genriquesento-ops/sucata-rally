@@ -56,34 +56,38 @@
     },
     {
       "id": "oleo",
-      "peso": [0.5, 0.8],
+      "peso": [0.5, 1.0],
       "desde": 300,
       "depois": ["reta", "lombadas", "pedras"],
       "dica": "oil",
       "objetos": [
-        {"tipo": "oleo", "quantidade": [2, 3], "z": [8, 32], "x": [-3.5, 3.5], "escala": [0.8, 1.2],
-         "girar": true, "altura_extra": 0.03, "faixa_livre": {"faixas": [-3, 0, 3], "folga": 2.6}}
+        {"tipo": "oleo", "quantidade": [2, 3], "z": [8, 32], "x": [-4.5, 4.5], "escala": [0.9, 1.2],
+         "girar": true, "altura_extra": 0.03, "faixa_livre": {"faixas": [-3, 0, 3], "folga": 3.0},
+         "longe": {"quantidade": 4}}
       ]
     },
     {
       "id": "serras",
-      "peso": [0.5, 0.6],
+      "peso": [0.5, 1.2],
       "desde": 500,
       "depois": ["reta"],
       "dica": "saw",
       "objetos": [
-        {"tipo": "serra", "z": 12, "x": 0, "alinhar": true, "params": {"amplitude": 4.2, "periodo": [2.6, 3.4]}},
-        {"tipo": "serra", "z": 28, "x": 0, "alinhar": true, "chance": 0.5, "params": {"amplitude": 4.2, "periodo": [2.6, 3.4]}}
+        {"tipo": "serra", "z": 12, "x": 0, "alinhar": true, "params": {"amplitude": 4.2, "periodo": [2.6, 3.4]},
+         "longe": {"params": {"periodo": 0.6}}},
+        {"tipo": "serra", "z": 28, "x": 0, "alinhar": true, "chance": 0.4, "params": {"amplitude": 4.2, "periodo": [2.6, 3.4]},
+         "longe": {"chance": 1.0, "params": {"periodo": 0.6}}}
       ]
     },
     {
       "id": "martelo",
-      "peso": [0.4, 0.6],
+      "peso": [0.4, 1.2],
       "desde": 700,
       "depois": ["reta", "boost"],
       "dica": "hammer",
       "objetos": [
-        {"tipo": "martelo", "z": 20, "x": 0, "alinhar": true, "params": {"angulo": 60, "periodo": [2.2, 3.0]}}
+        {"tipo": "martelo", "z": 20, "x": 0, "alinhar": true, "params": {"angulo": 60, "periodo": [2.2, 3.0]},
+         "longe": {"params": {"periodo": 0.65, "angulo": 1.25}}}
       ]
     }
   ]

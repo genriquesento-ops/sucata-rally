@@ -260,14 +260,22 @@ func on_obstacle(event: String, data := {}) -> void:
 		"dodge":
 			_counts.dodges += 1
 			_trick(data.text, data.coins)
+			Effects.sparkle(self, _car.global_position + Vector3.UP, UiKit.GOLD)
+			_hud.flash(Color(1.0, 0.85, 0.2, 0.18))
 		"oil":
 			_hud.toast("ÓLEO!")
+			_hud.flash(Color(0.3, 0.1, 0.5, 0.25))
 			Sfx.play("slip")
 			_vibrate(60)
 		"hit":
-			_shake = maxf(_shake, 0.7)
+			_shake = maxf(_shake, 0.8)
 			_vibrate(150)
 			Sfx.play("clang")
+			Effects.sparks(self, data.get("pos", _car.global_position))
+			_hud.flash(Color(1.0, 0.35, 0.1, 0.4))
+			_hud.toast("PANCADA!")
+			# a pancada também faz o carro rodar um pouco
+			_car.apply_torque_impulse(Vector3.UP * (1.0 if randf() < 0.5 else -1.0) * _car.mass * 1.5)
 			_combo_time = 0.0  # pancada quebra o combo
 
 
@@ -450,6 +458,31 @@ func _process(delta: float) -> void:
 	_worst_frame_ms = maxf(_worst_frame_ms, delta * 1000.0)
 	if delta > 0.05 and OS.is_debug_build():
 		print("FRAME LENTO %.0f ms em z=%.0f" % [delta * 1000.0, _car.global_position.z])
+
+
+## Modo demo: leva o carro para 25 m antes do primeiro trecho `id` depois de `after` metros.
+func teleport_to_segment(id: String, after := 0.0) -> bool:
+	var track := _terrain.track
+	for i in Track.COUNT:
+		if i * Track.SEGMENT > after and track.segment_of(i).id == id:
+			var z := i * Track.SEGMENT - 25.0
+			var x := _terrain.path_x(z)
+			print("DEMO teleporte: trecho %d (%s) em z=%.0f, objetos: %s" % [i, id, z + 25.0,
+				track.placements(_terrain, i).itens.map(func(it): return "%s@%.0f" % [it.tipo, it.z])])
+			_terrain.generate_all(Vector3(x, 0, z))
+			var dir := Vector3(_terrain.path_x(z + 2.0) - x, 0, 2.0).normalized()
+			var xf := Transform3D(Basis.looking_at(-dir), Vector3(x, _terrain.height(x, z) + 1.2, z))
+			# corpo em movimento: teleporta direto no servidor de física (só mudar a
+			# posição do nó às vezes é desfeito pelo próximo passo da física)
+			var rid := _car.get_rid()
+			PhysicsServer3D.body_set_state(rid, PhysicsServer3D.BODY_STATE_TRANSFORM, xf)
+			PhysicsServer3D.body_set_state(rid, PhysicsServer3D.BODY_STATE_LINEAR_VELOCITY, dir * 12.0)
+			PhysicsServer3D.body_set_state(rid, PhysicsServer3D.BODY_STATE_ANGULAR_VELOCITY, Vector3.ZERO)
+			_car.global_transform = xf
+			_best_z = z
+			_cam.global_position = _car.global_position - dir * 11.0 + Vector3.UP * 6.5
+			return true
+	return false
 
 
 func is_over() -> bool:

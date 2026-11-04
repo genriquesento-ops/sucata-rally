@@ -63,6 +63,29 @@ static func sparkle(parent: Node3D, pos: Vector3, color: Color) -> void:
 	p.finished.connect(p.queue_free)
 
 
+## Faíscas de metal numa batida (serra, martelo): rápidas, quentes e caindo.
+static func sparks(parent: Node3D, pos: Vector3) -> void:
+	var p := _base(48, 0.7, 0.22)
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.direction = Vector3.UP
+	p.spread = 70.0
+	p.initial_velocity_min = 5.0
+	p.initial_velocity_max = 11.0
+	p.gravity = Vector3(0, -18, 0)
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.3
+	var g := Gradient.new()
+	g.set_color(0, Color(1, 1, 0.75, 1))
+	g.set_color(1, Color(1, 0.3, 0.05, 0))
+	g.add_point(0.4, Color("ffb030"))
+	p.color_ramp = g
+	p.position = pos
+	parent.add_child(p)
+	p.emitting = true
+	p.finished.connect(p.queue_free)
+
+
 ## Nuvem de poeira no pouso de um salto; se apaga sozinha.
 static func landing_dust(parent: Node3D, pos: Vector3, color: Color) -> void:
 	var p := _base(24, 0.9, 0.5)
