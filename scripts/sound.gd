@@ -5,10 +5,14 @@ extends Node
 ## Uso: Sfx.play("coin"), Sfx.set_engine(ligado, 0..1), Sfx.apply_volumes().
 
 const RATE := 22050  # Hz, mono: suficiente para efeitos e economiza memória
-const POOL := 8
+const VOICES := 4  # cópias do mesmo som tocando ao mesmo tempo (moedas seguidas)
+const PAD := 256  # amostras extras no fim de cada som (ver _wav)
 
 var _sfx := {}  # nome -> AudioStreamWAV
-var _players: Array[AudioStreamPlayer] = []
+## Um tocador fixo por som, que nunca troca de stream. Trocar o stream de um tocador
+## enquanto a thread de áudio do Android ainda terminava o som anterior derrubava o jogo
+## no celular (SIGSEGV na thread AudioTrack).
+var _players := {}  # nome -> AudioStreamPlayer
 var _music: AudioStreamPlayer
 var _engine: AudioStreamPlayer
 
@@ -29,11 +33,13 @@ func _ready() -> void:
 	_sfx.sizzle = _wav(_hiss(0.6, 0.35))
 	_sfx.wind = _wav(_noise(0.9, 0.35, true))
 	_sfx.warn = _wav(_notes([[880.0, 0.07], [660.0, 0.1]], 0.22))
-	for i in POOL:
+	for sound_name: String in _sfx:
 		var p := AudioStreamPlayer.new()
 		p.bus = "SFX"
+		p.stream = _sfx[sound_name]
+		p.max_polyphony = VOICES
 		add_child(p)
-		_players.append(p)
+		_players[sound_name] = p
 	_engine = AudioStreamPlayer.new()
 	_engine.bus = "SFX"
 	_engine.stream = _wav(_engine_loop(), true)
@@ -49,12 +55,11 @@ func _ready() -> void:
 
 
 func play(name: String, pitch_jitter := 0.05) -> void:
-	for p in _players:
-		if not p.playing:
-			p.stream = _sfx[name]
-			p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
-			p.play()
-			return
+	var p: AudioStreamPlayer = _players.get(name)
+	if p == null:
+		return
+	p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
+	p.play()
 
 
 ## Ronco do motor: rotação (tom) acompanha a velocidade, de 0 a 1.
@@ -63,7 +68,7 @@ func set_engine(on: bool, rpm: float) -> void:
 		_engine.play()
 	elif not on and _engine.playing:
 		_engine.stop()
-	_engine.pitch_scale = 0.7 + clampf(rpm, 0.0, 1.5) * 1.1
+	_engine.pitch_scale = 0.7 + clampf(rpm, 0.0, 1.2) * 1.1  # no máximo ~2x
 
 
 func apply_volumes() -> void:
@@ -88,11 +93,20 @@ func _set_bus(bus: String, volume: float) -> void:
 
 # ---------------------------------------------------------------- síntese
 
+## Converte para PCM 16 bits. Os dados levam PAD amostras extras no fim (silêncio, ou o
+## começo de novo nos sons em loop) além do fim marcado: o mixador lê um pouco à frente
+## para interpolar, e assim nunca passa do fim da memória do som.
 static func _wav(samples: PackedFloat32Array, loop := false) -> AudioStreamWAV:
+	var count := samples.size()
 	var data := PackedByteArray()
-	data.resize(samples.size() * 2)
-	for i in samples.size():
-		data.encode_s16(i * 2, int(clampf(samples[i], -1.0, 1.0) * 32767.0))
+	data.resize((count + PAD) * 2)
+	for i in count + PAD:
+		var s := 0.0
+		if i < count:
+			s = samples[i]
+		elif loop:
+			s = samples[(i - count) % count]
+		data.encode_s16(i * 2, int(clampf(s, -1.0, 1.0) * 32767.0))
 	var w := AudioStreamWAV.new()
 	w.format = AudioStreamWAV.FORMAT_16_BITS
 	w.mix_rate = RATE
