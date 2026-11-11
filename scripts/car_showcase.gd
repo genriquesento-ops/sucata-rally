@@ -28,6 +28,7 @@ func _init() -> void:
 	light.rotation_degrees = Vector3(-45, 35, 0)
 	_viewport.add_child(light)
 	_pivot = Node3D.new()
+	_pivot.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # gira no _process
 	_viewport.add_child(_pivot)
 	_cam = Camera3D.new()
 	_cam.fov = 40.0

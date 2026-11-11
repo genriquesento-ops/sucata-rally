@@ -548,6 +548,8 @@ func teleport_to_segment(id: String, after := 0.0) -> bool:
 			_car.global_transform = xf
 			_best_z = z
 			_cam.global_position = _car.global_position - dir * 11.0 + Vector3.UP * 6.5
+			_car.reset_physics_interpolation()  # teleporte: não interpolar desde o ponto antigo
+			_cam.reset_physics_interpolation()
 			return true
 	return false
 

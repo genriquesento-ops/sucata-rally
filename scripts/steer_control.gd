@@ -1,12 +1,13 @@
 class_name SteerControl
 extends Control
 ## Direção livre: encoste o dedo em qualquer lugar da tela e arraste para os lados.
-## O ponto de referência acompanha o dedo quando ele passa do raio, e ao inverter o
-## movimento (desenhando um "infinito") ele corre ao encontro do dedo: o carro troca
-## de lado logo, sem precisar voltar o dedo até o ponto onde encostou.
+## A direção é a distância do dedo até o ponto onde encostou. Se o dedo passar do raio,
+## o ponto de referência vai junto, então voltar um pouco já começa a desvirar.
+## (Antes a referência corria contra o dedo ao inverter, mas no celular o tremor do dedo
+## fazia o volante oscilar sozinho.)
 
-const RADIUS := 75.0  # pixels de arrasto para virar o máximo, na sensibilidade 1 (menor = mais rápido)
-const DEAD_ZONE := 8.0
+const RADIUS := 150.0  # unidades da tela (altura 720) para virar o máximo, na sensibilidade 1
+const DEAD_ZONE := 16.0  # ignora o tremor do dedo parado
 const HINT_SECONDS := 4.0
 
 var _radius := RADIUS  # ajustado pela sensibilidade nas opções
@@ -36,12 +37,7 @@ func _input(event: InputEvent) -> void:
 			_finger = -1
 			_update()
 	elif event is InputEventScreenDrag and event.index == _finger:
-		var move: float = event.position.x - _pos.x
 		_pos = event.position
-		# voltando para o outro lado: a referência anda contra o dedo, então a direção
-		# troca de lado com metade do arrasto (resposta rápida no zigue-zague)
-		if move * (_pos.x - _anchor.x) < 0.0:
-			_anchor.x -= move
 		_anchor.x = clampf(_anchor.x, _pos.x - _radius, _pos.x + _radius)
 		_anchor.y = _pos.y
 		_update()
@@ -67,7 +63,9 @@ func _process(delta: float) -> void:
 
 func _update() -> void:
 	var dx := 0.0 if _finger == -1 else _pos.x - _anchor.x
-	_value = 0.0 if absf(dx) < DEAD_ZONE else clampf(dx / _radius, -1.0, 1.0)
+	# zona morta sem "degrau": depois dela a direção cresce desde zero até o máximo
+	var amount := clampf((absf(dx) - DEAD_ZONE) / (_radius - DEAD_ZONE), 0.0, 1.0)
+	_value = signf(dx) * amount
 	_set_action("steer_right", maxf(_value, 0.0))
 	_set_action("steer_left", maxf(-_value, 0.0))
 	queue_redraw()
