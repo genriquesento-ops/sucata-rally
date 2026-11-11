@@ -43,6 +43,14 @@ func _input(event: InputEvent) -> void:
 		_update()
 
 
+## No PC dá para virar pelas setas/A/D: não confundir com ação presa.
+static func _keyboard_steering() -> bool:
+	for key in [KEY_LEFT, KEY_RIGHT, KEY_A, KEY_D]:
+		if Input.is_physical_key_pressed(key):
+			return true
+	return false
+
+
 ## Desliga o controle (fim da corrida).
 func disable() -> void:
 	_finger = -1
@@ -55,7 +63,19 @@ func _exit_tree() -> void:
 	Input.action_release("steer_right")
 
 
+func _notification(what: int) -> void:
+	# app perdeu o foco (notificação, tela desligada): o Android pode não mandar o "soltou"
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_WINDOW_FOCUS_OUT]:
+		_finger = -1
+		_update()
+
+
 func _process(delta: float) -> void:
+	# sem dedo na tela a direção é zero, sempre (proteção contra ação "presa")
+	if _finger == -1 and (Input.is_action_pressed("steer_left") or Input.is_action_pressed("steer_right")) \
+			and not _keyboard_steering():
+		Input.action_release("steer_left")
+		Input.action_release("steer_right")
 	if _hint_time > 0.0:
 		_hint_time -= delta
 		queue_redraw()

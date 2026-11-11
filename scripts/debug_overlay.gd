@@ -8,6 +8,7 @@ const MAX_LINES := 6
 var _label: Label
 var _frames := 0
 var _touches := 0
+var _down := {}  # índices dos dedos que o jogo acha que estão na tela
 var _lines: PackedStringArray = []
 var _mutex := Mutex.new()
 
@@ -54,8 +55,12 @@ func add_line(text: String) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch and event.pressed:
-		_touches += 1
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_touches += 1
+			_down[event.index] = true
+		else:
+			_down.erase(event.index)
 
 
 func _process(_delta: float) -> void:
@@ -65,5 +70,11 @@ func _process(_delta: float) -> void:
 	_mutex.lock()
 	var errors := "\n".join(_lines)
 	_mutex.unlock()
-	_label.text = "debug · quadro %d · %d fps · toques %d\n%s" % [
-		_frames, Engine.get_frames_per_second(), _touches, errors]
+	var car := get_tree().get_first_node_in_group("car") as VehicleBody3D
+	var wheel := ""
+	if car != null:
+		wheel = " · volante %+.2f · giro %+.2f" % [car.steering, car.angular_velocity.y]
+	var steer := Input.get_action_strength("steer_left") - Input.get_action_strength("steer_right")
+	_label.text = "debug · quadro %d · %d fps · toques %d · dedos %d · direção %+.2f%s · joypads %d\n%s" % [
+		_frames, Engine.get_frames_per_second(), _touches, _down.size(), steer, wheel,
+		Input.get_connected_joypads().size(), errors]

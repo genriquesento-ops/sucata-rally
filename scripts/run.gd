@@ -228,6 +228,18 @@ func _free_offset(from_z: float, look_z: float) -> float:
 	return best
 
 
+## Lado para onde a ré vai virar o nariz do carro (1 = esquerda, -1 = direita): o que o
+## jogador está pedindo ou, sem dedo na tela, o lado da trilha. (Antes, sem dedo, era
+## sempre a direita: parecia que o carro puxava para a direita sozinho.)
+func _unstick_side() -> float:
+	if absf(_car.steer_input) > 0.1:
+		return signf(_car.steer_input)
+	var pos := _car.global_position
+	var look_z := pos.z + 12.0
+	var local := _car.to_local(Vector3(_terrain.path_x(look_z), pos.y, look_z))
+	return 1.0 if local.x >= 0.0 else -1.0
+
+
 ## Ré automática: sem freio na mão, um carro empacado numa pedra ou árvore ficaria
 ## empurrando para sempre. Se empacar acelerando, ele dá ré por um instante virando
 ## para o outro lado e depois segue.
@@ -243,7 +255,7 @@ func _unstick(delta: float) -> void:
 		if _blocked > 0.8:
 			_blocked = 0.0
 			_reverse_time = 1.1
-			_reverse_steer = 1.0 if _car.steer_input >= 0.0 else -1.0
+			_reverse_steer = _unstick_side()
 	else:
 		_blocked = 0.0
 

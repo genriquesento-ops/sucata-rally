@@ -22,6 +22,10 @@ var _boost_flame: CPUParticles3D
 var _rocket_flame: CPUParticles3D  # só no Foguete
 
 
+func _enter_tree() -> void:
+	add_to_group("car")  # o painel de diagnóstico lê o volante daqui
+
+
 func setup(tier: int, car_stats: Dictionary, paint := 0) -> void:
 	stats = car_stats
 	collision_layer = 1 | Obstacle.CAR_LAYER  # camada 2: só o carro (as áreas de óleo/boost olham para ela)
