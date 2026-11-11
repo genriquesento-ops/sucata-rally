@@ -61,7 +61,9 @@ func _process(delta: float) -> void:
 	_hint.modulate.a = 0.55 + 0.45 * sin(_time * 4.0)
 
 
-func _unhandled_input(event: InputEvent) -> void:
+## Em _input (e não _unhandled_input) para nenhum controle da tela — como o visor 3D do
+## carro — engolir o toque antes de chegar aqui.
+func _input(event: InputEvent) -> void:
 	var pressed: bool = (event is InputEventScreenTouch and event.pressed) \
 		or (event is InputEventMouseButton and event.pressed) \
 		or event.is_action_pressed("ui_accept")
@@ -69,6 +71,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_started = true  # toque e clique emulado chegam juntos: só vale um
 		get_viewport().set_input_as_handled()
 		Sfx.play("click")
-		start.emit()
+		start.emit.call_deferred()  # troca de tela fora do tratamento do evento
 	elif event.is_action_pressed("ui_cancel"):
 		get_tree().quit()

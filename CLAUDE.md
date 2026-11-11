@@ -44,6 +44,7 @@ D:\Godot\editor\Godot_v4.7.2-stable_win64_console.exe --path D:\sucata-rally -- 
 ... --path D:\sucata-rally -- --demo-traps=D:/sucata-rally/build/traps
 
 # testes: tests/drive_test.gd (física, --headless), trap_test.gd (cada armadilha dá o evento certo, --headless),
+#         touch_test.tscn (toque na tela inicial abre a garagem; é cena, rodar sem --script),
 #         biome_shots.gd, track_shots.gd, look_test.gd, noise_range.gd
 ... --headless --path D:\sucata-rally --script res://tests/drive_test.gd
 
