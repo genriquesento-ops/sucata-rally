@@ -1,22 +1,27 @@
 extends Node
-## Estabilidade do carro numa corrida real, sem toque (só a ajuda na direção), em mapas fixos.
-## Mede quanto o carro "rabeia": giro médio e máximo em volta do eixo vertical, rés automáticas
-## e distância. Rodar como cena (para carregar os autoloads):
-##   godot --headless --path . res://tests/stability_test.tscn
+## Estabilidade do carro numa corrida real, sem toque (só a ajuda na direção), em mapas fixos
+## e com carros em vários pontos da evolução. Mede quanto o carro "rabeia" (giro que o volante
+## não pediu), o tempo tombado, o tempo no ar, as rés automáticas e a distância.
+## Rodar como cena (para carregar os autoloads); o "--demo-teste" faz usar o save do demo:
+##   godot --headless --path . res://tests/stability_test.tscn -- --demo-teste
 
-const SEEDS := [11, 22, 33, 44]
+const SEEDS := [11, 22, 33]
 const SECONDS := 30.0
+## [estágio, nível de todas as peças]
+const CARS := [[0, 0], [0, 5], [2, 15], [4, 25]]
 
 var _main: Node
 var _run: Run
-var _seed_i := -1
+var _case := -1
 var _t := 0.0
 var _sum_sq := 0.0
 var _samples := 0
 var _max_yaw := 0.0
 var _revs := 0
 var _last_rev := 0.0
-var _total_rms := 0.0
+var _tipped := 0.0
+var _air := 0.0
+var _max_speed := 0.0
 
 
 func _ready() -> void:
@@ -26,12 +31,15 @@ func _ready() -> void:
 
 
 func _next() -> void:
-	_seed_i += 1
-	if _seed_i >= SEEDS.size():
-		print("MÉDIA giro rms=%.2f rad/s" % [_total_rms / SEEDS.size()])
+	_case += 1
+	if _case >= CARS.size() * SEEDS.size():
 		get_tree().quit()
 		return
-	seed(SEEDS[_seed_i])
+	var car: Array = CARS[_case / SEEDS.size()]
+	Save.tier = car[0]
+	for id in Save.levels:
+		Save.levels[id] = car[1]
+	seed(SEEDS[_case % SEEDS.size()])
 	_run = _main.start_run()
 	_t = 0.0
 	_sum_sq = 0.0
@@ -39,6 +47,9 @@ func _next() -> void:
 	_max_yaw = 0.0
 	_revs = 0
 	_last_rev = 0.0
+	_tipped = 0.0
+	_air = 0.0
+	_max_speed = 0.0
 
 
 func _physics_process(delta: float) -> void:
@@ -53,13 +64,18 @@ func _physics_process(delta: float) -> void:
 		_sum_sq += extra * extra
 		_samples += 1
 		_max_yaw = maxf(_max_yaw, absf(extra))
+	else:
+		_air += delta
+	if car.uprightness() < 0.5:
+		_tipped += delta
+	_max_speed = maxf(_max_speed, car.linear_velocity.length())
 	if _run._reverse_time > 0.0 and _last_rev <= 0.0:
 		_revs += 1
 	_last_rev = _run._reverse_time
 	if _t >= SECONDS:
-		var rms := sqrt(_sum_sq / maxf(_samples, 1))
-		_total_rms += rms
-		print("mapa %d: rabeada rms=%.2f máx=%.2f rad/s · rés %d · chegou a %.0f m" % [
-			SEEDS[_seed_i], rms, _max_yaw, _revs, car.global_position.z])
+		var c: Array = CARS[_case / SEEDS.size()]
+		print("estágio %d nível %2d mapa %d: rabeada %.2f (máx %.1f) · tombado %4.1f s · no ar %4.1f s · rés %d · vel máx %2.0f m/s · chegou a %4.0f m" % [
+			c[0], c[1], SEEDS[_case % SEEDS.size()], sqrt(_sum_sq / maxf(_samples, 1)), _max_yaw,
+			_tipped, _air, _revs, _max_speed, car.global_position.z])
 		_run = null
 		_next()

@@ -31,7 +31,7 @@
       "moedas": false,
       "dica": "jump",
       "objetos": [
-        {"tipo": "rampa", "z": 16, "x_escolha": [-2, 2], "inclinacao": -14, "altura_extra": 0.75,
+        {"tipo": "rampa", "z": 16, "x_escolha": [-3, 3], "inclinacao": -14, "altura_extra": 0.75,
          "arco": {"de": 4, "ate": 18, "altura": 3.2}}
       ]
     },

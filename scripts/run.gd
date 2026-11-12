@@ -68,6 +68,7 @@ var _beep_time := 0.0  # bipe do tanque baixo
 # impacto
 var _shake := 0.0
 var _prev_speed := 0.0
+var _last_landing_boost := -99.0
 
 
 func _ready() -> void:
@@ -375,7 +376,10 @@ func _check_air(delta: float) -> void:
 		if _car.uprightness() > 0.96 and _car.forward_speed() > 8.0:
 			_counts.perfect += 1
 			_trick("POUSO PERFEITO", 5)
-			if _stats.landing_boost:
+			# mini-boost do Nitro: com intervalo, senão o boost fazia saltar, pousar, dar
+			# outro boost... e o carro ficava descontrolado
+			if _stats.landing_boost and Obstacle.clock - _last_landing_boost > 4.0:
+				_last_landing_boost = Obstacle.clock
 				_car.boost(0.4)
 	_air_time = 0.0
 

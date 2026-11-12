@@ -14,6 +14,11 @@ const REAR_GRIP := 1.0
 const BOOST_SECONDS := 1.5
 ## Força do controle de estabilidade (freio do giro não pedido). 0 = desligado.
 const STABILITY := 6.0
+## Força com que o carro se endireita no ar e amortecimento do giro (por kg).
+const AIR_RIGHTING := 5.0
+const AIR_DAMPING := 1.5
+## Amortecimento do balanço lateral no chão (por kg).
+const ROLL_DAMPING := 3.0
 
 var _wheels: Array[VehicleWheel3D] = []
 var _wheelbase := 1.6  # distância entre os eixos, medida em setup()
@@ -170,8 +175,17 @@ func _physics_process(delta: float) -> void:
 		var extra := yaw - clampf(yaw, minf(0.0, wanted), maxf(0.0, wanted))
 		apply_torque(Vector3.UP * -extra * mass * STABILITY)
 
-	# no ar o carro tende a se endireitar sozinho, para cair de rodas
+	# no ar o carro se endireita sozinho, para cair de rodas. Tem que ser forte: pegar uma
+	# rampa só com as rodas de um lado joga o carro girando de lado, e os carros rápidos
+	# capotavam quase sempre.
+	var tilt := global_basis.y.cross(Vector3.UP)
 	if not grounded:
-		var tilt := global_basis.y.cross(Vector3.UP)
 		var spin := angular_velocity - Vector3.UP * angular_velocity.dot(Vector3.UP)
-		apply_torque((tilt * 2.0 - spin * 0.6) * mass)
+		apply_torque((tilt * AIR_RIGHTING - spin * AIR_DAMPING) * mass)
+	else:
+		# no chão: amortece o balanço lateral (o carro gangorrava de um lado para o outro)
+		# e, se já estiver muito inclinado, ajuda a voltar em vez de tombar de vez
+		var roll := angular_velocity.dot(global_basis.z)
+		apply_torque(global_basis.z * -roll * mass * ROLL_DAMPING)
+		if global_basis.y.y < 0.9:
+			apply_torque(tilt * AIR_RIGHTING * mass)

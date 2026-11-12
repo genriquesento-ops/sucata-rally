@@ -65,24 +65,33 @@ static func biome_blend(z: float) -> float:
 	return smoothstep(BIOME_LENGTH - BIOME_BLEND, BIOME_LENGTH, into)
 
 
+## Ganho de uma peça com retorno decrescente: cresce rápido nos primeiros níveis e se
+## aproxima de `total` sem nunca passar. `half` = nível em que chega à metade.
+## (Com ganho em linha reta, no nível 25 o carro ia a 238 km/h, com pneu 5× mais
+## aderente e suspensão 4× mais dura: capotava e quicava sem controle.)
+static func gain(level: int, total: float, half: float) -> float:
+	return total * level / (level + half)
+
+
 ## Desempenho do carro a partir do estágio e dos níveis das peças.
 static func stats(tier: int, levels: Dictionary) -> Dictionary:
 	var t: Dictionary = TIERS[tier]
 	var motor: int = levels.motor
 	var tires: int = levels.tires
 	var susp: int = levels.suspension
+	var nitro: int = levels.get("nitro", 0)
 	return {
-		"top_speed": 14.0 + 1.6 * motor + 3.0 * tier,  # m/s
-		"engine_force": t.mass * (3.0 + 0.45 * motor),  # Newtons: aceleração ~3 m/s² no nível 0
-		"friction": 2.2 + 0.35 * tires,
-		"stiffness": 30.0 + 4.0 * susp,
-		"travel": 0.25 + 0.02 * susp,
-		"compression": 0.3 + 0.02 * susp,
-		"relaxation": 0.5 + 0.02 * susp,
+		"top_speed": 14.0 + 2.0 * tier + gain(motor, 16.0, 10.0),  # m/s: 14 no começo, ~33 no máximo
+		"engine_force": t.mass * (3.0 + gain(motor, 5.0, 10.0)),  # Newtons: aceleração ~3 m/s² no nível 0
+		"friction": 2.2 + gain(tires, 2.0, 8.0),
+		"stiffness": 30.0 + gain(susp, 30.0, 10.0),
+		"travel": 0.25 + gain(susp, 0.2, 10.0),
+		"compression": 0.3 + gain(susp, 0.5, 10.0),
+		"relaxation": 0.5 + gain(susp, 0.5, 10.0),
 		"fuel": 35.0 + 6.0 * levels.tank + 5.0 * tier,  # segundos de corrida
 		"magnet": 1.5 + 0.8 * levels.magnet,
-		"boost_power": 1.0 + 0.12 * levels.get("nitro", 0),  # força e duração do boost
-		"landing_boost": levels.get("nitro", 0) >= 1,  # pouso perfeito dá mini-boost
+		"boost_power": 1.0 + gain(nitro, 0.8, 10.0),  # força e duração do boost
+		"landing_boost": nitro >= 1,  # pouso perfeito dá mini-boost
 	}
 
 

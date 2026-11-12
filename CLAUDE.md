@@ -45,7 +45,8 @@ D:\Godot\editor\Godot_v4.7.2-stable_win64_console.exe --path D:\sucata-rally -- 
 
 # testes: tests/drive_test.gd (física, --headless), trap_test.gd (cada armadilha dá o evento certo, --headless),
 #         touch_test.tscn (toque na tela inicial abre a garagem; é cena, rodar sem --script),
-#         stability_test.tscn (rabeada/giro do carro em 4 mapas fixos, sem toque; cena),
+#         stability_test.tscn -- --demo-teste (rabeada, tombos e distância de 4 carros, do inicial ao
+#           Foguete nível 25, em 3 mapas fixos, sem toque; cena; ~6 min),
 #         biome_shots.gd, track_shots.gd, look_test.gd, noise_range.gd
 ... --headless --path D:\sucata-rally --script res://tests/drive_test.gd
 
