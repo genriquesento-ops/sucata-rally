@@ -9,11 +9,14 @@ var brake_input := 0.0  # 0..1 (freia; parado, dá ré)
 var steer_input := 0.0  # -1 (direita) .. 1 (esquerda)
 var grip := 1.0  # multiplicador da região atual
 
-## Rodas de trás com um pouco menos de aderência: a traseira escorrega de leve nas curvas.
-const REAR_GRIP := 0.85
+## Aderência das rodas de trás em relação às da frente (era 0.85: no celular a traseira rabeava demais).
+const REAR_GRIP := 1.0
 const BOOST_SECONDS := 1.5
+## Força do controle de estabilidade (freio do giro não pedido). 0 = desligado.
+const STABILITY := 6.0
 
 var _wheels: Array[VehicleWheel3D] = []
+var _wheelbase := 1.6  # distância entre os eixos, medida em setup()
 var _boost_time := 0.0
 var _slip_time := 0.0  # óleo, gelo
 var _slip_grip := 0.3
@@ -61,6 +64,8 @@ func setup(tier: int, car_stats: Dictionary, paint := 0) -> void:
 		w.add_child(CarModel.build_wheel(t.wheel, hub_color))
 		add_child(w)
 		_wheels.append(w)
+	var zs: Array = CarModel.wheel_positions(tier).map(func(p: Vector3) -> float: return p.z)
+	_wheelbase = maxf(zs.max() - zs.min(), 0.5)
 
 	var rear := Vector3(0, -size.y / 2.0 - t.wheel * 0.5, -size.z * 0.4)
 	_dust = Effects.dust()
@@ -154,6 +159,16 @@ func _physics_process(delta: float) -> void:
 	_boost_flame.emitting = _boost_time > 0.0
 	if _rocket_flame != null:
 		_rocket_flame.emitting = throttle > 0.0
+
+	# controle de estabilidade: no chão, freia o giro que o volante não pediu (nas ondulações
+	# uma roda perde o chão, a outra empurra e o carro rabeava sozinho). Giro entre zero e o
+	# pedido pelo volante (velocidade × tan(volante) / entre-eixos) passa livre: só freia,
+	# nunca acrescenta giro.
+	if grounded:
+		var wanted := speed * tan(steering) / _wheelbase
+		var yaw := angular_velocity.y
+		var extra := yaw - clampf(yaw, minf(0.0, wanted), maxf(0.0, wanted))
+		apply_torque(Vector3.UP * -extra * mass * STABILITY)
 
 	# no ar o carro tende a se endireitar sozinho, para cair de rodas
 	if not grounded:

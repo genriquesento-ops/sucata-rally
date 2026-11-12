@@ -36,6 +36,14 @@ func _ready() -> void:
 	_slider(box, "Música", "music", 0.0, 1.0)
 	_slider(box, "Efeitos sonoros", "sfx", 0.0, 1.0)
 
+	var assist := CheckButton.new()
+	assist.text = "Ajuda na direção"
+	assist.tooltip_text = "Sem o dedo virando, o carro se alinha devagar com a estrada"
+	assist.add_theme_font_size_override("font_size", 22)
+	assist.button_pressed = Save.settings.assist
+	assist.toggled.connect(func(on: bool): _save_setting("assist", on))
+	box.add_child(assist)
+
 	var vibration := CheckButton.new()
 	vibration.text = "Vibração"
 	vibration.add_theme_font_size_override("font_size", 22)

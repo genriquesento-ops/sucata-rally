@@ -134,6 +134,8 @@ func _physics_process(delta: float) -> void:
 			_auto_steer()
 		else:
 			_car.steer_input = Input.get_action_strength("steer_left") - Input.get_action_strength("steer_right")
+			if absf(_car.steer_input) < 0.05 and Save.settings.assist:
+				_assist_steer()
 		_unstick(delta)
 
 	var pos := _car.global_position
@@ -190,6 +192,17 @@ func _notification(what: int) -> void:
 	# Android: saiu do app no meio da corrida -> encerra e salva as moedas
 	if what == NOTIFICATION_APPLICATION_PAUSED and _end_reason.is_empty() and _car != null:
 		_finish("Pausado")
+
+
+## Ajuda na direção (opção, ligada por padrão): sem o dedo virando, o carro se alinha
+## devagar com o centro da trilha. Não desvia de nada (isso é com o jogador) e vira no
+## máximo 70%: o dedo sempre manda mais. Sem ela, nas curvas o carro seguia reto, entrava
+## no mato e a ré automática o fazia rodar.
+func _assist_steer() -> void:
+	var pos := _car.global_position
+	var look_z := pos.z + 14.0
+	var local := _car.to_local(Vector3(_terrain.path_x(look_z), pos.y, look_z))
+	_car.steer_input = clampf(atan2(local.x, local.z) * 1.5, -0.7, 0.7)
 
 
 ## Piloto automático: segue a trilha olhando 12 m à frente e desvia do que tem "evitar"

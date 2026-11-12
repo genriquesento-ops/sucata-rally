@@ -13,7 +13,7 @@ var paint := 0  # índice em CarModel.PAINTS (0 = cor original do estágio)
 var tips_seen: Array = []  # dicas da primeira vez já mostradas
 var totals := {}  # números somados de todas as corridas (ver achievements.gd)
 var achievements_done: Array = []  # ids das conquistas já pagas
-const DEFAULT_SETTINGS := {"steer": 1.0, "music": 0.6, "sfx": 0.8, "vibration": true, "quality": 1}
+const DEFAULT_SETTINGS := {"steer": 1.0, "music": 0.6, "sfx": 0.8, "vibration": true, "quality": 1, "assist": true}
 var settings := DEFAULT_SETTINGS.duplicate()  # quality: 1 = alta, 0 = baixa
 
 var _path := "user://save.cfg"
