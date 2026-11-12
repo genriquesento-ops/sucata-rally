@@ -54,9 +54,21 @@ func set_car(tier: int, paint: int) -> void:
 	floor_node.mesh = floor_mesh
 	floor_node.position.y = bottom - 0.05
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color("4a4658")
+	mat.albedo_color = Color("3a3658")
 	floor_node.material_override = mat
 	_pivot.add_child(floor_node)
+	# aro dourado na borda do palco
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = size.z * 0.9 - 0.05
+	ring_mesh.outer_radius = size.z * 0.9 + 0.05
+	var ring := MeshInstance3D.new()
+	ring.mesh = ring_mesh
+	ring.position.y = bottom
+	var ring_mat := StandardMaterial3D.new()
+	ring_mat.albedo_color = UiKit.GOLD
+	ring_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring.material_override = ring_mat
+	_pivot.add_child(ring)
 	# enquadra o carro conforme o tamanho do estágio
 	var dist := size.z * 1.6 + 2.5
 	_cam.transform = Transform3D(Basis(), Vector3(dist * 0.75, dist * 0.5, dist * 0.75)) \

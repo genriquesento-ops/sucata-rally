@@ -67,6 +67,8 @@ D:\Godot\editor\Godot_v4.7.2-stable_win64_console.exe --path D:\sucata-rally -- 
 - `car.gd` (VehicleBody3D, frente = +Z), `car_model.gd` (visual por estágio + pinturas), `car_showcase.gd`.
 - `run.gd`: corrida, manobras/combo, ré automática, boost, dicas, câmera, fim de corrida + missões.
 - `hud.gd`, `steer_control.gd` (direção por arrasto), `garage.gd`, `settings_panel.gd`, `title_screen.gd`, `missions.gd`, `pickups.gd`, `effects.gd`, `ui_kit.gd`.
+- Visual da interface: `ui_kit.gd` (cartões, degradê, holofote, fonte em negrito), `ui_icon.gd` (ícones desenhados por código, sem imagens/emojis), `icon_button.gd` (botão com ícone; usar `base_min`, não `custom_minimum_size`), `level_bar.gd` (nível em segmentos).
+- `debug_overlay.gd` (autoload): linha vermelha de diagnóstico só no APK de debug do celular (versão, fps, dedos, direção, volante, erros). Opções tem "+50 000 moedas (dev)" só em debug.
 - `achievements.gd` (conquistas sobre `Save.totals`, somados no fim de cada corrida; "t_<tipo>" = armadilhas por tipo, "r_<n>" = chegadas à região n) e `achievements_panel.gd` (tela aberta pelo botão "Conquistas" da garagem).
 - Galões em 130, 312, 552, 869, 1287, 1839 m… (`pickups.gd`), sempre na faixa livre do trecho; abaixo de 25% de tanque o HUD avisa a distância até o próximo.
 
@@ -80,5 +82,5 @@ D:\Godot\editor\Godot_v4.7.2-stable_win64_console.exe --path D:\sucata-rally -- 
 - Teleportar um RigidBody/VehicleBody em movimento: usar `PhysicsServer3D.body_set_state` (só `global_transform` às vezes é desfeito).
 
 ## Estado atual e próximos passos
-Tudo funcionando no PC (testado por screenshots e logs do demo). **Ainda não testado num celular real.**
+Testado num celular real (120 fps) por APKs de debug gerados na nuvem. Ajustes feitos por causa do celular: direção menos sensível, ajuda na direção (opção), controle de estabilidade e anti-capotagem em `car.gd`, peças com ganho decrescente (`GameData.gain`), rampas a 3 m do centro, garagem redesenhada.
 Próximos passos sugeridos: gerar APK e testar no celular (desempenho, tamanho dos botões, sons); receita do F-Droid (compilar templates do Godot a partir do código-fonte); git + repositório público com LICENSE (MIT).
