@@ -51,7 +51,8 @@ func _ready() -> void:
 	_hint = UiKit.label("Toque para começar", 34)
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(_hint)
-	var version := UiKit.label("versão %s · software livre" % Platform.flavor, 14, Color("c8c4d8"))
+	var version := UiKit.label("versão %s %s · software livre" % [Platform.flavor,
+		ProjectSettings.get_setting("application/config/version", "")], 14, Color("c8c4d8"))
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(version)
 

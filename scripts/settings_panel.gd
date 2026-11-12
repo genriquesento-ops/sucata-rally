@@ -70,9 +70,23 @@ func _ready() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(spacer)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	box.add_child(row)
 	_reset = UiKit.button("Zerar progresso", 20, Color("8a2d2d"))
+	_reset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_reset.pressed.connect(_on_reset)
-	box.add_child(_reset)
+	row.add_child(_reset)
+	# modo dev: só no APK/execução de debug, nunca na versão publicada
+	if OS.is_debug_build():
+		var dev := UiKit.button("+50 000 moedas (dev)", 20, Color("6a4a9a"))
+		dev.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		dev.pressed.connect(func():
+			Sfx.play("coin")
+			Save.coins += 50000
+			Save.persist()
+			progress_reset.emit())  # a garagem redesenha as moedas
+		row.add_child(dev)
 	var close := UiKit.button("Fechar", 26)
 	close.custom_minimum_size.y = 56
 	close.pressed.connect(func():

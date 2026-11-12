@@ -75,6 +75,6 @@ func _process(_delta: float) -> void:
 	if car != null:
 		wheel = " · volante %+.2f · giro %+.2f" % [car.steering, car.angular_velocity.y]
 	var steer := Input.get_action_strength("steer_left") - Input.get_action_strength("steer_right")
-	_label.text = "debug · quadro %d · %d fps · toques %d · dedos %d · direção %+.2f%s · joypads %d\n%s" % [
-		_frames, Engine.get_frames_per_second(), _touches, _down.size(), steer, wheel,
+	_label.text = "debug %s · quadro %d · %d fps · toques %d · dedos %d · direção %+.2f%s · joypads %d\n%s" % [
+		ProjectSettings.get_setting("application/config/version", "?"), _frames, Engine.get_frames_per_second(), _touches, _down.size(), steer, wheel,
 		Input.get_connected_joypads().size(), errors]

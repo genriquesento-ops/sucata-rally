@@ -7,6 +7,7 @@ config_version=5
 [application]
 
 config/name="Sucata Rally"
+config/version="0.1.5"
 config/description="Corrida 3D com física em mapas procedurais infinitos."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")

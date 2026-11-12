@@ -49,7 +49,9 @@ D:\Godot\editor\Godot_v4.7.2-stable_win64_console.exe --path D:\sucata-rally -- 
 #         biome_shots.gd, track_shots.gd, look_test.gd, noise_range.gd
 ... --headless --path D:\sucata-rally --script res://tests/drive_test.gd
 
-# APK (definir antes ANDROID_HOME e GODOT_ANDROID_KEYSTORE_DEBUG_PATH/USER/PASSWORD):
+# APK (definir antes ANDROID_HOME e GODOT_ANDROID_KEYSTORE_DEBUG_PATH/USER/PASSWORD).
+# Ao mudar a versão: version/code e version/name nos 2 presets de export_presets.cfg E
+# application/config/version no project.godot (aparece na tela inicial e no painel de debug).
 ... --headless --path D:\sucata-rally --export-debug "Android FOSS" build/android/sucata-rally-foss.apk
 ```
 
